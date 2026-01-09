@@ -16,7 +16,7 @@ namespace UnityProjectManager.Services
     {
         public async Task<bool> RenameProjectAsync(UnityProject project, string newName)
         {
-            if (string.IsNullOrWhiteSpace(newName)) return false;
+            if (project == null || string.IsNullOrWhiteSpace(project.Path) || string.IsNullOrWhiteSpace(newName)) return false;
 
             try
             {
@@ -45,6 +45,7 @@ namespace UnityProjectManager.Services
 
         public async Task<bool> ChangeUnityVersionAsync(UnityProject project, string newVersion)
         {
+            if (project == null || string.IsNullOrWhiteSpace(project.Path)) return false;
             var versionPath = Path.Combine(project.Path, "ProjectSettings", "ProjectVersion.txt");
             if (!File.Exists(versionPath)) return false;
 
@@ -73,6 +74,7 @@ namespace UnityProjectManager.Services
 
         public async Task<bool> CleanLibraryAsync(UnityProject project)
         {
+            if (project == null || string.IsNullOrWhiteSpace(project.Path)) return true;
             var libraryPath = Path.Combine(project.Path, "Library");
             if (!Directory.Exists(libraryPath)) return true; // Already clean or doesn't exist
 
