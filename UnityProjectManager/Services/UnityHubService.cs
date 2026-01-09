@@ -157,6 +157,51 @@ namespace UnityProjectManager.Services
             }
         }
 
+        public async Task<string?> GetEditorPathForVersionAsync(string version)
+        {
+            var editors = await GetInstalledEditorsAsync();
+            
+            // Try exact match first
+            foreach (var editor in editors)
+            {
+                // Editor path usually is .../2022.3.10f1/Editor/Unity.exe
+                if (editor.Contains(version)) return editor;
+            }
+
+            // Try partial match (same major.minor)
+            var parts = version.Split('.');
+            if (parts.Length >= 2)
+            {
+                var minorVersion = $"{parts[0]}.{parts[1]}.";
+                foreach (var editor in editors)
+                {
+                    if (editor.Contains(minorVersion)) return editor;
+                }
+            }
+
+            return editors.FirstOrDefault();
+        }
+
+        public async Task LaunchProjectAsync(string projectPath, string editorPath)
+        {
+            await Task.Run(() =>
+            {
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = editorPath,
+                        Arguments = $"-projectPath \"{projectPath}\"",
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Launch failed: {ex.Message}");
+                }
+            });
+        }
+
         private string DetermineVersionType(string version)
         {
             if (version.Contains("f")) return "f (Final)"; // Standard release often implies stability but not strictly LTS unless 202x.4/3

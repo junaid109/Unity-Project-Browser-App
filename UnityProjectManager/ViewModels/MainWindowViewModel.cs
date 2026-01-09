@@ -172,4 +172,24 @@ public partial class MainWindowViewModel : ViewModelBase
         await _editorService.CleanLibraryAsync(SelectedProject);
         // Show notification or status?
     }
+
+    [RelayCommand]
+    private async Task OpenProject()
+    {
+        if (SelectedProject == null || string.IsNullOrEmpty(SelectedProject.Path) || string.IsNullOrEmpty(SelectedProject.UnityVersion)) return;
+
+        var editorPath = await _unityService.GetEditorPathForVersionAsync(SelectedProject.UnityVersion);
+        
+        if (!string.IsNullOrEmpty(editorPath))
+        {
+            await _unityService.LaunchProjectAsync(SelectedProject.Path, editorPath);
+            CloseProjectDetails(); // Close details after launching
+        }
+        else
+        {
+            // Handle case where no suitable editor is found
+            // TODO: Show a prompt to manually locate Unity.exe
+            Console.WriteLine($"No Unity editor found for version {SelectedProject.UnityVersion}");
+        }
+    }
 }

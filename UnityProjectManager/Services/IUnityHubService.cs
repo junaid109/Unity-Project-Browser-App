@@ -8,5 +8,7 @@ namespace UnityProjectManager.Services
     {
         Task<IEnumerable<string>> GetInstalledEditorsAsync();
         Task<IEnumerable<UnityProject>> ScanWatchFoldersAsync(IEnumerable<string> watchFolders);
+        Task<string?> GetEditorPathForVersionAsync(string version);
+        Task LaunchProjectAsync(string projectPath, string editorPath);
     }
 }
