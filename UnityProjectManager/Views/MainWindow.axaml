@@ -21,6 +21,7 @@
 
     <Window.Resources>
         <conv:PathToBitmapConverter x:Key="PathToBitmapConverter"/>
+        <conv:StringEqualsConverter x:Key="StringEqualsConverter"/>
     </Window.Resources>
 
     <Grid>
@@ -36,36 +37,21 @@
                    <StackPanel Spacing="5">
                        <TextBlock Text="LIBRARY" FontWeight="Bold" Foreground="#888888" Margin="8,0,0,10" FontSize="12"/>
                        
-                       <ListBox Background="Transparent" CornerRadius="4">
-                           <ListBox.Styles>
-                               <Style Selector="ListBoxItem">
-                                    <Setter Property="Padding" Value="10,8"/>
-                                    <Setter Property="CornerRadius" Value="4"/>
-                               </Style>
-                           </ListBox.Styles>
-                           <ListBoxItem IsSelected="True">
-                               <StackPanel Orientation="Horizontal" Spacing="10">
-                                   <!-- <ui:SymbolIcon Symbol="Library" /> -->
-                                   <TextBlock Text="Projects"/>
-                               </StackPanel>
-                           </ListBoxItem>
-                           <ListBoxItem>
-                               <StackPanel Orientation="Horizontal" Spacing="10">
-                                   <TextBlock Text="Installs"/>
-                               </StackPanel>
-                           </ListBoxItem>
-                           <ListBoxItem>
-                               <StackPanel Orientation="Horizontal" Spacing="10">
-                                   <TextBlock Text="Learn"/>
-                               </StackPanel>
-                           </ListBoxItem>
-                       </ListBox>
+                       <StackPanel Spacing="2">
+                           <Button Content="Projects" Command="{Binding SelectTabCommand}" CommandParameter="Projects"
+                                   HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12,8"
+                                   Background="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Projects', Converter={StaticResource StringEqualsConverter}}"/> <!-- Note: I need a color converter for highlighting, but for now just function -->
+                           <Button Content="Installs" Command="{Binding SelectTabCommand}" CommandParameter="Installs"
+                                   HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12,8" Background="Transparent"/>
+                           <Button Content="Learn" Command="{Binding SelectTabCommand}" CommandParameter="Learn"
+                                   HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12,8" Background="Transparent"/>
+                       </StackPanel>
                        
                        <TextBlock Text="WATCH FOLDERS" FontWeight="Bold" Foreground="#888888" Margin="8,20,0,10" FontSize="12"/>
-                       <Button x:Name="AddFolderButton" Content="Add Folder" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" />
+                       <Button x:Name="AddFolderButton" Content="Add Folder" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12,8" />
                        
                        <TextBlock Text="TOOLS" FontWeight="Bold" Foreground="#888888" Margin="8,20,0,10" FontSize="12"/>
-                       <Button Content="Sync with Unity Hub" Command="{Binding SyncWithHubCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
+                       <Button Content="Sync with Unity Hub" Command="{Binding SyncWithHubCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12,8">
                            <Button.Styles>
                                <Style Selector="Button">
                                    <Setter Property="Background" Value="Transparent"/>
@@ -79,24 +65,53 @@
            </SplitView.Pane>
 
            <SplitView.Content>
-                <Grid RowDefinitions="Auto,*" Margin="0,30,0,0">
-                     <!-- Header -->
-                     <TextBlock Text="Projects" FontSize="28" FontWeight="SemiLight" Margin="40,20,0,20" />
-                     
-                     <ScrollViewer Grid.Row="1" Padding="40,0,40,40">
-                         <ItemsControl ItemsSource="{Binding Projects}">
-                             <ItemsControl.ItemsPanel>
-                                 <ItemsPanelTemplate>
-                                     <WrapPanel />
-                                 </ItemsPanelTemplate>
-                             </ItemsControl.ItemsPanel>
-                             <ItemsControl.ItemTemplate>
-                                 <DataTemplate>
-                                     <views:ProjectCardView />
-                                 </DataTemplate>
-                             </ItemsControl.ItemTemplate>
-                         </ItemsControl>
-                     </ScrollViewer>
+                <Grid Margin="0,30,0,0">
+                     <!-- Page: Projects -->
+                     <Grid RowDefinitions="Auto,*" IsVisible="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Projects'}">
+                          <TextBlock Text="Projects" FontSize="28" FontWeight="SemiLight" Margin="40,20,0,20" />
+                          <ScrollViewer Grid.Row="1" Padding="40,0,40,40">
+                              <ItemsControl ItemsSource="{Binding Projects}">
+                                  <ItemsControl.ItemsPanel>
+                                      <ItemsPanelTemplate>
+                                          <WrapPanel />
+                                      </ItemsPanelTemplate>
+                                  </ItemsControl.ItemsPanel>
+                                  <ItemsControl.ItemTemplate>
+                                      <DataTemplate>
+                                          <views:ProjectCardView />
+                                      </DataTemplate>
+                                  </ItemsControl.ItemTemplate>
+                              </ItemsControl>
+                          </ScrollViewer>
+                     </Grid>
+
+                     <!-- Page: Installs -->
+                     <Grid RowDefinitions="Auto,*" IsVisible="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Installs'}">
+                          <TextBlock Text="Installs" FontSize="28" FontWeight="SemiLight" Margin="40,20,0,20" />
+                          <ScrollViewer Grid.Row="1" Padding="40,0,40,40">
+                              <ItemsControl ItemsSource="{Binding InstalledEditors}">
+                                  <ItemsControl.ItemTemplate>
+                                      <DataTemplate>
+                                          <Border Background="#1A1A1A" Margin="0,0,0,8" Padding="20" CornerRadius="8" BorderBrush="#333333" BorderThickness="1">
+                                              <Grid ColumnDefinitions="*,Auto">
+                                                  <StackPanel Spacing="5">
+                                                      <TextBlock Text="{Binding}" FontSize="14" FontWeight="SemiBold"/>
+                                                      <TextBlock Text="Unity Editor" FontSize="11" Foreground="#666666"/>
+                                                  </StackPanel>
+                                                  <Button Grid.Column="1" Content="Locate" Background="Transparent" BorderBrush="#444444" Padding="15,5"/>
+                                              </Grid>
+                                          </Border>
+                                      </DataTemplate>
+                                  </ItemsControl.ItemTemplate>
+                              </ItemsControl>
+                          </ScrollViewer>
+                     </Grid>
+
+                     <!-- Page: Learn -->
+                     <Grid IsVisible="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Learn'}" 
+                           VerticalAlignment="Center" HorizontalAlignment="Center">
+                         <TextBlock Text="Unity Learn content coming soon..." Foreground="#888888" FontSize="18"/>
+                     </Grid>
                 </Grid>
            </SplitView.Content>
        </SplitView>

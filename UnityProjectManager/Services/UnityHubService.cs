@@ -30,56 +30,61 @@ namespace UnityProjectManager.Services
             }
 
             // 2. Check secondaryInstallPath.conf
-            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            var secondaryPathConf = Path.Combine(appData, "UnityHub", "secondaryInstallPath.json"); // New Hub uses JSON sometimes, checking conf as requested
+            var roaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             
-            // Fallback for older Hub versions or custom name
-            if (!File.Exists(secondaryPathConf))
-            {
-                 secondaryPathConf = Path.Combine(appData, "UnityHub", "secondaryInstallPath.conf");
-            }
+            var pathsToTry = new[] {
+                Path.Combine(roaming, "UnityHub"),
+                Path.Combine(local, "UnityHub")
+            };
 
-            if (File.Exists(secondaryPathConf))
+            foreach (var hubDataPath in pathsToTry)
             {
-                try 
+                var secondaryPathConf = Path.Combine(hubDataPath, "secondaryInstallPath.json");
+                if (!File.Exists(secondaryPathConf))
+                    secondaryPathConf = Path.Combine(hubDataPath, "secondaryInstallPath.conf");
+
+                if (File.Exists(secondaryPathConf))
                 {
-                    var content = await File.ReadAllTextAsync(secondaryPathConf);
-                    if (Directory.Exists(content.Trim()))
+                    try 
                     {
-                         foreach (var dir in Directory.GetDirectories(content.Trim()))
+                        var content = await File.ReadAllTextAsync(secondaryPathConf);
+                        var path = content.Trim().Replace("\"", ""); // Clean up potential quotes
+                        if (Directory.Exists(path))
                         {
-                            var editorPath = Path.Combine(dir, "Editor", "Unity.exe");
-                            if (File.Exists(editorPath))
+                             foreach (var dir in Directory.GetDirectories(path))
                             {
-                                editors.Add(editorPath);
+                                var editorPath = Path.Combine(dir, "Editor", "Unity.exe");
+                                if (File.Exists(editorPath)) editors.Add(editorPath);
                             }
                         }
                     }
+                    catch { }
                 }
-                catch { }
-            }
 
-            // 3. Check editors.json
-            var editorsJson = Path.Combine(appData, "UnityHub", "editors.json");
-            if (File.Exists(editorsJson))
-            {
-                try
+                // 3. Check editors.json
+                var editorsJson = Path.Combine(hubDataPath, "editors.json");
+                if (File.Exists(editorsJson))
                 {
-                    var json = await File.ReadAllTextAsync(editorsJson);
-                    var node = System.Text.Json.Nodes.JsonNode.Parse(json);
-                    if (node != null)
+                    try
                     {
-                        foreach (var editorEntry in node.AsObject())
+                        var json = await File.ReadAllTextAsync(editorsJson);
+                        var node = JsonNode.Parse(json);
+                        if (node != null)
                         {
-                            var path = editorEntry.Value?["location"]?.ToString();
-                            if (!string.IsNullOrEmpty(path) && File.Exists(path))
+                            // If it's an object (old format) or array (new format)
+                            if (node is JsonObject obj)
                             {
-                                editors.Add(path);
+                                foreach (var editorEntry in obj)
+                                {
+                                    var path = editorEntry.Value?["location"]?.ToString();
+                                    if (!string.IsNullOrEmpty(path) && File.Exists(path)) editors.Add(path);
+                                }
                             }
                         }
                     }
+                    catch { }
                 }
-                catch { }
             }
 
             return editors;
@@ -88,34 +93,41 @@ namespace UnityProjectManager.Services
         public async Task<IEnumerable<UnityProject>> GetHubProjectsAsync()
         {
             var hubProjects = new List<UnityProject>();
-            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            var projectPrefsPath = Path.Combine(appData, "UnityHub", "projectPrefs.json");
+            var roaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
-            if (!File.Exists(projectPrefsPath)) return hubProjects;
+            var pathsToTry = new[] {
+                Path.Combine(roaming, "UnityHub", "projectPrefs.json"),
+                Path.Combine(local, "UnityHub", "projectPrefs.json")
+            };
 
-            try
+            foreach (var projectPrefsPath in pathsToTry)
             {
-                var json = await File.ReadAllTextAsync(projectPrefsPath);
-                var node = System.Text.Json.Nodes.JsonNode.Parse(json);
-                if (node != null)
+                if (!File.Exists(projectPrefsPath)) continue;
+
+                try
                 {
-                    // projectPrefs.json usually has keys as project paths
-                    foreach (var entry in node.AsObject())
+                    var json = await File.ReadAllTextAsync(projectPrefsPath);
+                    var node = JsonNode.Parse(json);
+                    if (node != null && node is JsonObject obj)
                     {
-                        var projectPath = entry.Key;
-                        if (Directory.Exists(projectPath))
+                        foreach (var entry in obj)
                         {
-                            var versionPath = Path.Combine(projectPath, "ProjectSettings", "ProjectVersion.txt");
-                            if (File.Exists(versionPath))
+                            var projectPath = entry.Key;
+                            if (Directory.Exists(projectPath))
                             {
-                                var project = await ParseProjectAsync(projectPath, versionPath);
-                                if (project != null) hubProjects.Add(project);
+                                var versionPath = Path.Combine(projectPath, "ProjectSettings", "ProjectVersion.txt");
+                                if (File.Exists(versionPath))
+                                {
+                                    var project = await ParseProjectAsync(projectPath, versionPath);
+                                    if (project != null) hubProjects.Add(project);
+                                }
                             }
                         }
                     }
                 }
+                catch { }
             }
-            catch { }
 
             return hubProjects;
         }
@@ -204,6 +216,7 @@ namespace UnityProjectManager.Services
                     Path = projectPath,
                     UnityVersion = unityVersion,
                     LastModified = dirInfo.LastWriteTime,
+                    LastAccessTime = dirInfo.LastAccessTime,
                     ThumbnailPath = thumbnail,
                     VersionType = DetermineVersionType(unityVersion)
                 };

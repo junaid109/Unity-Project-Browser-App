@@ -24,6 +24,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private UnityProject? _selectedProject;
 
     [ObservableProperty]
+    private string _selectedTab = "Projects";
+
+    [ObservableProperty]
     private bool _isDetailsOpen;
 
     [ObservableProperty]
@@ -31,6 +34,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     private ObservableCollection<string> _watchFolders;
+
+    [ObservableProperty]
+    private ObservableCollection<string> _installedEditors;
 
     public MainWindowViewModel()
     {
@@ -42,6 +48,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _watchFolders = new ObservableCollection<string>();
         _packages = new ObservableCollection<UnityPackage>();
         _projects = new ObservableCollection<UnityProject>();
+        _installedEditors = new ObservableCollection<string>();
         
         // Initial Load
         InitializeAsync();
@@ -118,6 +125,11 @@ public partial class MainWindowViewModel : ViewModelBase
         // 2. Sync with Hub
         var hubProjects = await _unityService.GetHubProjectsAsync();
         MergeProjects(hubProjects);
+
+        // 3. Load Installs
+        var editors = await _unityService.GetInstalledEditorsAsync();
+        InstalledEditors.Clear();
+        foreach (var editor in editors) InstalledEditors.Add(editor);
     }
 
     private void MergeProjects(IEnumerable<UnityProject> newProjects)
@@ -138,10 +150,17 @@ public partial class MainWindowViewModel : ViewModelBase
                 }
                 existing.UnityVersion = project.UnityVersion;
                 existing.LastModified = project.LastModified;
+                existing.LastAccessTime = project.LastAccessTime;
                 existing.VersionType = project.VersionType;
                 existing.ThumbnailPath = project.ThumbnailPath;
             }
         }
+    }
+
+    [RelayCommand]
+    private void SelectTab(string tabName)
+    {
+        SelectedTab = tabName;
     }
 
     [RelayCommand]

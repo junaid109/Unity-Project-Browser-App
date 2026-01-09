@@ -18,6 +18,9 @@ namespace UnityProjectManager.Models
         private DateTime _lastModified;
 
         [ObservableProperty]
+        private DateTime _lastAccessTime;
+
+        [ObservableProperty]
         private string? _thumbnailPath;
         
         [ObservableProperty]

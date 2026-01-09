@@ -100,10 +100,16 @@
                         <TextBlock Text="{Binding UnityVersion}" FontSize="11" Foreground="White" FontWeight="SemiBold"/>
                     </Border>
                     
-                    <!-- Last Modified Badge/Text -->
+                    <!-- Last Modified -->
                     <Border Classes="Badge" Background="Transparent" BorderBrush="#66FFFFFF" BorderThickness="1">
-                         <TextBlock Text="{Binding LastModified, StringFormat='{}{0:MMM dd}'}" 
-                                    FontSize="11" Foreground="#DDDDDD"/>
+                         <TextBlock Text="{Binding LastModified, StringFormat='{}M: {0:MMM dd}'}" 
+                                    FontSize="9" Foreground="#DDDDDD"/>
+                    </Border>
+
+                    <!-- Last Accessed -->
+                    <Border Classes="Badge" Background="Transparent" BorderBrush="#66FFFFFF" BorderThickness="1">
+                         <TextBlock Text="{Binding LastAccessTime, StringFormat='{}O: {0:MMM dd}'}" 
+                                    FontSize="9" Foreground="#DDDDDD"/>
                     </Border>
                 </StackPanel>
             </Grid>
