@@ -115,7 +115,7 @@ namespace UnityProjectManager.Services
             }
         }
 
-        private async Task<UnityProject> ParseProjectAsync(string projectPath, string versionFilePath)
+        private async Task<UnityProject?> ParseProjectAsync(string projectPath, string versionFilePath)
         {
             try
             {
@@ -134,9 +134,7 @@ namespace UnityProjectManager.Services
                 var dirInfo = new DirectoryInfo(projectPath);
 
                 // Attempt to find a thumbnail
-                // 1. Assets/Editor/ProjectIcon.png (User suggestion)
-                // 2. Determine based on pattern
-                string thumbnail = null;
+                string? thumbnail = null;
                 var iconPath = Path.Combine(projectPath, "Assets", "Editor", "ProjectIcon.png");
                 if (File.Exists(iconPath))
                 {

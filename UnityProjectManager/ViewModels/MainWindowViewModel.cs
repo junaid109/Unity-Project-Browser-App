@@ -13,6 +13,8 @@ public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly IUnityHubService _unityService;
     private readonly IPackageService _packageService;
+    private readonly IConfigService _configService;
+    private readonly IProjectEditorService _editorService;
 
     [ObservableProperty]
     private ObservableCollection<UnityProject> _projects;
@@ -33,23 +35,43 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         _unityService = new UnityHubService();
         _packageService = new PackageService();
+        _configService = new ConfigService();
+        _editorService = new ProjectEditorService();
+
         _watchFolders = new ObservableCollection<string>();
         _packages = new ObservableCollection<UnityPackage>();
+        _projects = new ObservableCollection<UnityProject>();
         
-        // Add a default watch folder for demonstration if it exists
-        var defaultDocs = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Unity Projects");
-        if (System.IO.Directory.Exists(defaultDocs)) _watchFolders.Add(defaultDocs);
+        // Initial Load
+        InitializeAsync();
+    }
 
-        // Keep mock data for UI testing, but clear if you want only real data. 
-        // For now, I'll keep mock data to ensure the "Netflix" look is visible immediately.
-        Projects = new ObservableCollection<UnityProject>
+    private async void InitializeAsync()
+    {
+        // 1. Load Config
+        var config = await _configService.LoadConfigAsync();
+        foreach (var folder in config.WatchFolders)
         {
-            new UnityProject { Name = "RPG Adventure", UnityVersion = "2022.3.10f1", VersionType="LTS", LastModified = DateTime.Now.AddDays(-2) },
-            new UnityProject { Name = "Sci-Fi Shooter", UnityVersion = "2023.1.0b5", VersionType="Beta", LastModified = DateTime.Now.AddDays(-10) },
-        };
+            if (System.IO.Directory.Exists(folder))
+                WatchFolders.Add(folder);
+        }
 
-        // Trigger scan
-        LoadProjectsCommand.Execute(null);
+        // Add default if empty
+        if (WatchFolders.Count == 0)
+        {
+            var defaultDocs = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Unity Projects");
+            if (System.IO.Directory.Exists(defaultDocs)) AddWatchFolder(defaultDocs);
+        }
+
+        // 2. Load Mock Data for visuals if no real projects found initially
+        if (Projects.Count == 0)
+        {
+            Projects.Add(new UnityProject { Name = "RPG Adventure (Mock)", UnityVersion = "2022.3.10f1", VersionType="LTS", LastModified = DateTime.Now.AddDays(-2) });
+            Projects.Add(new UnityProject { Name = "Sci-Fi Shooter (Mock)", UnityVersion = "2023.1.0b5", VersionType="Beta", LastModified = DateTime.Now.AddDays(-10) });
+        }
+
+        // 3. Trigger Scan
+        await LoadProjectsAsync();
     }
     
     [RelayCommand]
@@ -73,10 +95,8 @@ public partial class MainWindowViewModel : ViewModelBase
         if (SelectedProject == null) return;
         
         Packages.Clear();
-        // Fallback for mock projects that don't satisfy File.Exists
         if (!System.IO.Directory.Exists(SelectedProject.Path)) 
         {
-             // Mock packages for mock projects
              Packages.Add(new UnityPackage("com.unity.render-pipelines.universal", "14.0.8"));
              Packages.Add(new UnityPackage("com.unity.textmeshpro", "3.0.6"));
              Packages.Add(new UnityPackage("com.unity.ide.visualstudio", "2.0.20"));
@@ -90,22 +110,24 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task LoadProjectsAsync()
     {
-        // 1. Scan Watch Folders
-        // Offload to background thread to prevent UI freeze during heavy IO
         var realProjects = await Task.Run(() => _unityService.ScanWatchFoldersAsync(WatchFolders));
         
         foreach (var project in realProjects)
         {
-            // Avoid duplicates based on path
-            if (!Projects.Any(p => p.Path == project.Path))
+            var existing = Projects.FirstOrDefault(p => p.Path == project.Path);
+            if (existing == null)
             {
                 Projects.Add(project);
             }
+            else
+            {
+                // Update existing
+                existing.Name = project.Name;
+                existing.UnityVersion = project.UnityVersion;
+                existing.LastModified = project.LastModified;
+                existing.VersionType = project.VersionType;
+            }
         }
-        
-        // 2. Scan Editors (Just logging or storing for now)
-        var editors = await Task.Run(() => _unityService.GetInstalledEditorsAsync());
-        // TODO: Store these editors in a list for the "Version Management" feature
     }
 
     [RelayCommand]
@@ -114,7 +136,40 @@ public partial class MainWindowViewModel : ViewModelBase
         if (!string.IsNullOrWhiteSpace(path) && System.IO.Directory.Exists(path) && !WatchFolders.Contains(path))
         {
             WatchFolders.Add(path);
+            SaveConfig();
             LoadProjectsCommand.Execute(null);
         }
+    }
+
+    private async void SaveConfig()
+    {
+        var config = new AppConfig { WatchFolders = WatchFolders.ToList() };
+        await _configService.SaveConfigAsync(config);
+    }
+
+    [RelayCommand]
+    private async Task RenameProject(string newName)
+    {
+        if (SelectedProject == null) return;
+        var success = await _editorService.RenameProjectAsync(SelectedProject, newName);
+        if (success)
+        {
+            // Refresh list if needed (already updated in model)
+        }
+    }
+
+    [RelayCommand]
+    private async Task ChangeUnityVersion(string newVersion)
+    {
+        if (SelectedProject == null) return;
+        await _editorService.ChangeUnityVersionAsync(SelectedProject, newVersion);
+    }
+
+    [RelayCommand]
+    private async Task CleanLibrary()
+    {
+        if (SelectedProject == null) return;
+        await _editorService.CleanLibraryAsync(SelectedProject);
+        // Show notification or status?
     }
 }
