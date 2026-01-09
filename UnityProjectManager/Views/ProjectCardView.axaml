@@ -1,0 +1,121 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:models="using:UnityProjectManager.Models"
+             xmlns:vm="using:UnityProjectManager.ViewModels"
+             xmlns:conv="using:UnityProjectManager.Converters"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="200"
+             x:Class="UnityProjectManager.Views.ProjectCardView"
+             x:DataType="models:UnityProject">
+
+    <UserControl.Resources>
+        <conv:PathToBitmapConverter x:Key="PathToBitmapConverter"/>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <!-- Card Base Style -->
+        <Style Selector="Border.Card">
+            <Setter Property="Background" Value="#1E1E1E"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="ClipToBounds" Value="True"/>
+            <Setter Property="BoxShadow" Value="0 4 8 0 #000000"/>
+            <Setter Property="RenderTransform" Value="scale(1)"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CircularEaseOut"/>
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <!-- Hover Effect -->
+        <Style Selector="Border.Card:pointerover">
+            <Setter Property="RenderTransform" Value="scale(1.05)"/>
+            <Setter Property="BoxShadow" Value="0 8 16 0 #000000"/> 
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <!-- Play Button Animation -->
+        <Style Selector="Button.PlayButton">
+            <Setter Property="Opacity" Value="0"/>
+            <Setter Property="ScaleTransform.ScaleX" Value="0.8"/>
+            <Setter Property="ScaleTransform.ScaleY" Value="0.8"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
+                    <DoubleTransition Property="ScaleTransform.ScaleX" Duration="0:0:0.2"/>
+                    <DoubleTransition Property="ScaleTransform.ScaleY" Duration="0:0:0.2"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.Card:pointerover Button.PlayButton">
+            <Setter Property="Opacity" Value="1"/>
+            <Setter Property="ScaleTransform.ScaleX" Value="1"/>
+            <Setter Property="ScaleTransform.ScaleY" Value="1"/>
+        </Style>
+
+        <!-- Badge Styles -->
+        <Style Selector="Border.Badge">
+            <Setter Property="Background" Value="#444444"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="6,2"/>
+        </Style>
+        <Style Selector="Border.Badge.lts">
+            <Setter Property="Background" Value="#2E7D32"/> <!-- Green for LTS -->
+        </Style>
+    </UserControl.Styles>
+
+    <Border Classes="Card" Width="280" Height="160" Margin="10">
+        <Grid>
+            <!-- Thumbnail Image -->
+             <!-- Fallback logic would be needed here, for now simpler -->
+            <Image Source="{Binding ThumbnailPath, Converter={StaticResource PathToBitmapConverter}}" 
+                   Stretch="UniformToFill" 
+                   VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+
+            <!-- Gradient Overlay -->
+            <Border VerticalAlignment="Bottom" Height="80">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                        <GradientStop Offset="0" Color="#00000000"/>
+                        <GradientStop Offset="1" Color="#FF000000"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
+
+            <!-- Content -->
+            <Grid VerticalAlignment="Bottom" Margin="12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="{Binding Name}" FontWeight="Bold" Foreground="White" FontSize="16" 
+                           TextTrimming="CharacterEllipsis"/>
+
+                <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="0,6,0,0" Spacing="8">
+                    <!-- Unity Version Badge -->
+                    <Border Classes="Badge" Classes.lts="{Binding IsLts}">
+                        <TextBlock Text="{Binding UnityVersion}" FontSize="11" Foreground="White" FontWeight="SemiBold"/>
+                    </Border>
+                    
+                    <!-- Last Modified Badge/Text -->
+                    <Border Classes="Badge" Background="Transparent" BorderBrush="#66FFFFFF" BorderThickness="1">
+                         <TextBlock Text="{Binding LastModified, StringFormat='{}{0:MMM dd}'}" 
+                                    FontSize="11" Foreground="#DDDDDD"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+
+            <!-- Hover Play/Open Overlay -->
+            <Button Classes="PlayButton" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Width="50" Height="50" CornerRadius="25"
+                    Background="#E50914" Foreground="White" Padding="0" BorderThickness="0"
+                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenProjectDetailsCommand}"
+                    CommandParameter="{Binding .}">
+                <ui:SymbolIcon Symbol="Play" FontSize="20"/>
+            </Button>
+        </Grid>
+    </Border>
+</UserControl>
