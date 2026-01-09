@@ -63,6 +63,17 @@
                        
                        <TextBlock Text="WATCH FOLDERS" FontWeight="Bold" Foreground="#888888" Margin="8,20,0,10" FontSize="12"/>
                        <Button x:Name="AddFolderButton" Content="Add Folder" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" />
+                       
+                       <TextBlock Text="TOOLS" FontWeight="Bold" Foreground="#888888" Margin="8,20,0,10" FontSize="12"/>
+                       <Button Content="Sync with Unity Hub" Command="{Binding SyncWithHubCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
+                           <Button.Styles>
+                               <Style Selector="Button">
+                                   <Setter Property="Background" Value="Transparent"/>
+                                   <Setter Property="BorderThickness" Value="1"/>
+                                   <Setter Property="BorderBrush" Value="#333333"/>
+                               </Style>
+                           </Button.Styles>
+                       </Button>
                    </StackPanel>
                </Border>
            </SplitView.Pane>

@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using UnityProjectManager.Models;
 
@@ -42,11 +43,9 @@ namespace UnityProjectManager.Services
             {
                 try 
                 {
-                    // Usually contains a simple path string or JSON array
                     var content = await File.ReadAllTextAsync(secondaryPathConf);
                     if (Directory.Exists(content.Trim()))
                     {
-                         // Scan that directory too
                          foreach (var dir in Directory.GetDirectories(content.Trim()))
                         {
                             var editorPath = Path.Combine(dir, "Editor", "Unity.exe");
@@ -57,10 +56,68 @@ namespace UnityProjectManager.Services
                         }
                     }
                 }
-                catch { /* Ignore read errors */ }
+                catch { }
+            }
+
+            // 3. Check editors.json
+            var editorsJson = Path.Combine(appData, "UnityHub", "editors.json");
+            if (File.Exists(editorsJson))
+            {
+                try
+                {
+                    var json = await File.ReadAllTextAsync(editorsJson);
+                    var node = System.Text.Json.Nodes.JsonNode.Parse(json);
+                    if (node != null)
+                    {
+                        foreach (var editorEntry in node.AsObject())
+                        {
+                            var path = editorEntry.Value?["location"]?.ToString();
+                            if (!string.IsNullOrEmpty(path) && File.Exists(path))
+                            {
+                                editors.Add(path);
+                            }
+                        }
+                    }
+                }
+                catch { }
             }
 
             return editors;
+        }
+
+        public async Task<IEnumerable<UnityProject>> GetHubProjectsAsync()
+        {
+            var hubProjects = new List<UnityProject>();
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var projectPrefsPath = Path.Combine(appData, "UnityHub", "projectPrefs.json");
+
+            if (!File.Exists(projectPrefsPath)) return hubProjects;
+
+            try
+            {
+                var json = await File.ReadAllTextAsync(projectPrefsPath);
+                var node = System.Text.Json.Nodes.JsonNode.Parse(json);
+                if (node != null)
+                {
+                    // projectPrefs.json usually has keys as project paths
+                    foreach (var entry in node.AsObject())
+                    {
+                        var projectPath = entry.Key;
+                        if (Directory.Exists(projectPath))
+                        {
+                            var versionPath = Path.Combine(projectPath, "ProjectSettings", "ProjectVersion.txt");
+                            if (File.Exists(versionPath))
+                            {
+                                var project = await ParseProjectAsync(projectPath, versionPath);
+                                if (project != null) hubProjects.Add(project);
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            return hubProjects;
         }
 
         public async Task<IEnumerable<UnityProject>> ScanWatchFoldersAsync(IEnumerable<string> watchFolders)

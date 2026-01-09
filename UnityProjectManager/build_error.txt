@@ -1,0 +1,11 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+E:\Work Files\Workspace\C#\Avalonia_Unity_Project_Browser\UnityProjectManager\ViewModels\MainWindowViewModel.cs(122,32): error CS0246: The type or namespace name 'IEnumerable<>' could not be found (are you missing a using directive or an assembly reference?) [E:\Work Files\Workspace\C#\Avalonia_Unity_Project_Browser\UnityProjectManager\UnityProjectManager.csproj]
+
+Build FAILED.
+
+E:\Work Files\Workspace\C#\Avalonia_Unity_Project_Browser\UnityProjectManager\ViewModels\MainWindowViewModel.cs(122,32): error CS0246: The type or namespace name 'IEnumerable<>' could not be found (are you missing a using directive or an assembly reference?) [E:\Work Files\Workspace\C#\Avalonia_Unity_Project_Browser\UnityProjectManager\UnityProjectManager.csproj]
+    0 Warning(s)
+    1 Error(s)
+
+Time Elapsed 00:00:02.32

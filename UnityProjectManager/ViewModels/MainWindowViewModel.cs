@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using UnityProjectManager.Models;
 using UnityProjectManager.Services;
@@ -110,9 +111,18 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task LoadProjectsAsync()
     {
+        // 1. Scan Watch Folders
         var realProjects = await Task.Run(() => _unityService.ScanWatchFoldersAsync(WatchFolders));
-        
-        foreach (var project in realProjects)
+        MergeProjects(realProjects);
+
+        // 2. Sync with Hub
+        var hubProjects = await _unityService.GetHubProjectsAsync();
+        MergeProjects(hubProjects);
+    }
+
+    private void MergeProjects(IEnumerable<UnityProject> newProjects)
+    {
+        foreach (var project in newProjects)
         {
             var existing = Projects.FirstOrDefault(p => p.Path == project.Path);
             if (existing == null)
@@ -121,13 +131,23 @@ public partial class MainWindowViewModel : ViewModelBase
             }
             else
             {
-                // Update existing
-                existing.Name = project.Name;
+                // Update existing if it was a mock
+                if (existing.Name?.Contains("(Mock)") == true)
+                {
+                     existing.Name = project.Name;
+                }
                 existing.UnityVersion = project.UnityVersion;
                 existing.LastModified = project.LastModified;
                 existing.VersionType = project.VersionType;
+                existing.ThumbnailPath = project.ThumbnailPath;
             }
         }
+    }
+
+    [RelayCommand]
+    private async Task SyncWithHub()
+    {
+        await LoadProjectsAsync();
     }
 
     [RelayCommand]
