@@ -154,19 +154,21 @@
                                                               </Border>
                                                           </Panel>
                                                           
-                                                          <StackPanel Padding="15" Spacing="8">
-                                                              <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="Bold" TextWrapping="Wrap" Height="44" MaxLines="2"/>
-                                                              <TextBlock Text="{Binding Description}" FontSize="12" Foreground="#888888" TextWrapping="Wrap" Height="50" MaxLines="3" TextTrimming="CharacterEllipsis"/>
-                                                              
-                                                              <Grid ColumnDefinitions="*,Auto">
-                                                                  <StackPanel Orientation="Horizontal" Spacing="10">
-                                                                      <TextBlock Text="{Binding Duration, StringFormat={}{0}m}" FontSize="11" Foreground="#AAAAAA"/>
-                                                                      <TextBlock Text="•" Foreground="#444444"/>
-                                                                      <TextBlock Text="{Binding SkillLevel}" FontSize="11" Foreground="#AAAAAA" TextTransform="Uppercase"/>
-                                                                  </StackPanel>
-                                                                  <TextBlock Grid.Column="1" Text="→" Foreground="#007ACC" FontWeight="Bold"/>
-                                                              </Grid>
-                                                          </StackPanel>
+                                                           <Border Padding="15">
+                                                               <StackPanel Spacing="8">
+                                                                   <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="Bold" TextWrapping="Wrap" Height="44" MaxLines="2"/>
+                                                                   <TextBlock Text="{Binding Description}" FontSize="12" Foreground="#888888" TextWrapping="Wrap" Height="50" MaxLines="3" TextTrimming="CharacterEllipsis"/>
+                                                                   
+                                                                   <Grid ColumnDefinitions="*,Auto">
+                                                                       <StackPanel Orientation="Horizontal" Spacing="10">
+                                                                           <TextBlock Text="{Binding Duration, StringFormat={}{0}m}" FontSize="11" Foreground="#AAAAAA"/>
+                                                                           <TextBlock Text="•" Foreground="#444444"/>
+                                                                           <TextBlock Text="{Binding SkillLevel}" FontSize="11" Foreground="#AAAAAA" />
+                                                                       </StackPanel>
+                                                                       <TextBlock Grid.Column="1" Text="→" Foreground="#007ACC" FontWeight="Bold"/>
+                                                                   </Grid>
+                                                               </StackPanel>
+                                                           </Border>
                                                       </StackPanel>
                                                   </Border>
                                               </Button>
