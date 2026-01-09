@@ -62,32 +62,55 @@ namespace UnityProjectManager.Services
                     catch { }
                 }
 
-                // 3. Check editors.json
+                // 3. Check editors.json and editors-v2.json
                 var editorsJson = Path.Combine(hubDataPath, "editors.json");
-                if (File.Exists(editorsJson))
-                {
-                    try
-                    {
-                        var json = await File.ReadAllTextAsync(editorsJson);
-                        var node = JsonNode.Parse(json);
-                        if (node != null)
-                        {
-                            // If it's an object (old format) or array (new format)
-                            if (node is JsonObject obj)
-                            {
-                                foreach (var editorEntry in obj)
-                                {
-                                    var path = editorEntry.Value?["location"]?.ToString();
-                                    if (!string.IsNullOrEmpty(path) && File.Exists(path)) editors.Add(path);
-                                }
-                            }
-                        }
-                    }
-                    catch { }
-                }
+                var editorsV2Json = Path.Combine(hubDataPath, "editors-v2.json");
+
+                await ParseEditorsFileAsync(editorsJson, editors);
+                await ParseEditorsFileAsync(editorsV2Json, editors);
             }
 
             return editors;
+        }
+
+        private async Task ParseEditorsFileAsync(string filePath, HashSet<string> editors)
+        {
+            if (!File.Exists(filePath)) return;
+
+            try
+            {
+                var json = await File.ReadAllTextAsync(filePath);
+                var node = JsonNode.Parse(json);
+                if (node == null) return;
+
+                // Handle editors-v2.json format (has "data" array)
+                if (node["data"] is JsonArray dataArray)
+                {
+                    foreach (var item in dataArray)
+                    {
+                        var path = item?["location"]?.ToString();
+                        if (!string.IsNullOrEmpty(path) && File.Exists(path)) editors.Add(path);
+                    }
+                }
+                // Handle editors.json format (object or array)
+                else if (node is JsonObject obj)
+                {
+                    foreach (var editorEntry in obj)
+                    {
+                        var path = editorEntry.Value?["location"]?.ToString();
+                        if (!string.IsNullOrEmpty(path) && File.Exists(path)) editors.Add(path);
+                    }
+                }
+                else if (node is JsonArray arr)
+                {
+                    foreach (var item in arr)
+                    {
+                        var path = item?["location"]?.ToString();
+                        if (!string.IsNullOrEmpty(path) && File.Exists(path)) editors.Add(path);
+                    }
+                }
+            }
+            catch { }
         }
 
         public async Task<IEnumerable<UnityProject>> GetHubProjectsAsync()
@@ -97,8 +120,8 @@ namespace UnityProjectManager.Services
             var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
             var pathsToTry = new[] {
-                Path.Combine(roaming, "UnityHub", "projectPrefs.json"),
-                Path.Combine(local, "UnityHub", "projectPrefs.json")
+                Path.Combine(roaming, "UnityHub", "projects-v1.json"),
+                Path.Combine(roaming, "UnityHub", "projectPrefs.json")
             };
 
             foreach (var projectPrefsPath in pathsToTry)
@@ -109,18 +132,36 @@ namespace UnityProjectManager.Services
                 {
                     var json = await File.ReadAllTextAsync(projectPrefsPath);
                     var node = JsonNode.Parse(json);
-                    if (node != null && node is JsonObject obj)
+                    if (node != null)
                     {
-                        foreach (var entry in obj)
+                        // projects-v1.json has a "data" property containing the projects
+                        var projectsData = node["data"] ?? node;
+                        
+                        if (projectsData is JsonObject obj)
                         {
-                            var projectPath = entry.Key;
-                            if (Directory.Exists(projectPath))
+                            foreach (var entry in obj)
                             {
-                                var versionPath = Path.Combine(projectPath, "ProjectSettings", "ProjectVersion.txt");
-                                if (File.Exists(versionPath))
+                                string? projectPath = null;
+                                
+                                // Try projects-v1.json style (value is object)
+                                if (entry.Value is JsonObject projectObj)
                                 {
-                                    var project = await ParseProjectAsync(projectPath, versionPath);
-                                    if (project != null) hubProjects.Add(project);
+                                    projectPath = projectObj["path"]?.ToString() ?? projectObj["projectPath"]?.ToString();
+                                }
+                                else
+                                {
+                                    // Try projectPrefs.json style (key is path)
+                                    projectPath = entry.Key;
+                                }
+
+                                if (!string.IsNullOrEmpty(projectPath) && Directory.Exists(projectPath))
+                                {
+                                    var versionPath = Path.Combine(projectPath, "ProjectSettings", "ProjectVersion.txt");
+                                    if (File.Exists(versionPath))
+                                    {
+                                        var project = await ParseProjectAsync(projectPath, versionPath);
+                                        if (project != null) hubProjects.Add(project);
+                                    }
                                 }
                             }
                         }

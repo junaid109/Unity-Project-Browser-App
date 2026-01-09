@@ -16,6 +16,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IPackageService _packageService;
     private readonly IConfigService _configService;
     private readonly IProjectEditorService _editorService;
+    private readonly ILearnService _learnService;
 
     [ObservableProperty]
     private ObservableCollection<UnityProject> _projects;
@@ -38,6 +39,15 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private ObservableCollection<string> _installedEditors;
 
+    [ObservableProperty]
+    private ObservableCollection<LearnContent> _learnContents;
+
+    [ObservableProperty]
+    private string _learnSearchQuery = "";
+
+    [ObservableProperty]
+    private bool _isLoadingLearn;
+
     public MainWindowViewModel()
     {
         _unityService = new UnityHubService();
@@ -49,6 +59,8 @@ public partial class MainWindowViewModel : ViewModelBase
         _packages = new ObservableCollection<UnityPackage>();
         _projects = new ObservableCollection<UnityProject>();
         _installedEditors = new ObservableCollection<string>();
+        _learnContents = new ObservableCollection<LearnContent>();
+        _learnService = new LearnService();
         
         // Initial Load
         InitializeAsync();
@@ -58,6 +70,8 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         // 1. Load Config
         var config = await _configService.LoadConfigAsync();
+        SelectedTab = config.SelectedTab;
+        
         foreach (var folder in config.WatchFolders)
         {
             if (System.IO.Directory.Exists(folder))
@@ -80,6 +94,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
         // 3. Trigger Scan
         await LoadProjectsAsync();
+        
+        // 4. Load initial Learn content
+        await SearchLearnContent();
     }
     
     [RelayCommand]
@@ -163,6 +180,11 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedTab = tabName;
     }
 
+    partial void OnSelectedTabChanged(string value)
+    {
+        SaveConfig();
+    }
+
     [RelayCommand]
     private async Task SyncWithHub()
     {
@@ -182,7 +204,11 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private async void SaveConfig()
     {
-        var config = new AppConfig { WatchFolders = WatchFolders.ToList() };
+        var config = new AppConfig 
+        { 
+            WatchFolders = WatchFolders.ToList(),
+            SelectedTab = SelectedTab
+        };
         await _configService.SaveConfigAsync(config);
     }
 
@@ -229,6 +255,43 @@ public partial class MainWindowViewModel : ViewModelBase
             // Handle case where no suitable editor is found
             // TODO: Show a prompt to manually locate Unity.exe
             Console.WriteLine($"No Unity editor found for version {SelectedProject.UnityVersion}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task SearchLearnContent()
+    {
+        IsLoadingLearn = true;
+        try
+        {
+            var results = await _learnService.SearchContentAsync(LearnSearchQuery);
+            LearnContents.Clear();
+            foreach (var item in results)
+            {
+                LearnContents.Add(item);
+            }
+        }
+        finally
+        {
+            IsLoadingLearn = false;
+        }
+    }
+
+    [RelayCommand]
+    private void OpenLearnUrl(string? url)
+    {
+        if (string.IsNullOrEmpty(url)) return;
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to open URL: {ex.Message}");
         }
     }
 }

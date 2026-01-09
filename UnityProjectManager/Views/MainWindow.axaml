@@ -107,11 +107,75 @@
                           </ScrollViewer>
                      </Grid>
 
-                     <!-- Page: Learn -->
-                     <Grid IsVisible="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Learn'}" 
-                           VerticalAlignment="Center" HorizontalAlignment="Center">
-                         <TextBlock Text="Unity Learn content coming soon..." Foreground="#888888" FontSize="18"/>
-                     </Grid>
+                      <!-- Page: Learn -->
+                      <Grid RowDefinitions="Auto,Auto,*" IsVisible="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Learn'}">
+                          <TextBlock Text="Unity Learn" FontSize="28" FontWeight="SemiLight" Margin="40,20,0,10" />
+                          
+                          <!-- Search Bar -->
+                          <Border Grid.Row="1" Margin="40,10,40,20" Background="#1A1A1A" CornerRadius="8" BorderBrush="#333333" BorderThickness="1">
+                              <Grid ColumnDefinitions="*,Auto">
+                                  <TextBox Text="{Binding LearnSearchQuery}" Watermark="Search tutorials, courses, and pathways..." 
+                                           Classes="transparent" BorderThickness="0" Margin="10,5" VerticalContentAlignment="Center">
+                                      <TextBox.KeyBindings>
+                                          <KeyBinding Gesture="Enter" Command="{Binding SearchLearnContentCommand}" />
+                                      </TextBox.KeyBindings>
+                                  </TextBox>
+                                  <Button Grid.Column="1" Command="{Binding SearchLearnContentCommand}" Background="Transparent" Padding="15,5">
+                                      <TextBlock Text="Search" Foreground="#007ACC" FontWeight="SemiBold"/>
+                                  </Button>
+                              </Grid>
+                          </Border>
+
+                          <ScrollViewer Grid.Row="2" Padding="40,0,40,40">
+                              <StackPanel>
+                                  <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsLoadingLearn}" Height="2" Margin="0,0,0,10" Foreground="#007ACC"/>
+                                  
+                                  <ItemsControl ItemsSource="{Binding LearnContents}">
+                                      <ItemsControl.ItemsPanel>
+                                          <ItemsPanelTemplate>
+                                              <WrapPanel />
+                                          </ItemsPanelTemplate>
+                                      </ItemsControl.ItemsPanel>
+                                      <ItemsControl.ItemTemplate>
+                                          <DataTemplate>
+                                              <Button Background="Transparent" Padding="0" Margin="0,0,20,20" 
+                                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenLearnUrlCommand}"
+                                                      CommandParameter="{Binding Url}">
+                                                  <Border Width="280" Background="#1A1A1A" CornerRadius="12" ClipToBounds="True" BorderBrush="#333333" BorderThickness="1">
+                                                      <StackPanel>
+                                                          <!-- Thumbnail -->
+                                                          <Panel Height="150" Background="#111111">
+                                                              <Image Source="{Binding ThumbnailUrl, Converter={StaticResource PathToBitmapConverter}}" 
+                                                                     Stretch="UniformToFill"/>
+                                                              <!-- Badge -->
+                                                              <Border HorizontalAlignment="Right" VerticalAlignment="Top" 
+                                                                      Background="#CC000000" CornerRadius="0,0,0,8" Padding="8,4">
+                                                                  <TextBlock Text="{Binding Type}" FontSize="10" Foreground="White" FontWeight="Bold"/>
+                                                              </Border>
+                                                          </Panel>
+                                                          
+                                                          <StackPanel Padding="15" Spacing="8">
+                                                              <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="Bold" TextWrapping="Wrap" Height="44" MaxLines="2"/>
+                                                              <TextBlock Text="{Binding Description}" FontSize="12" Foreground="#888888" TextWrapping="Wrap" Height="50" MaxLines="3" TextTrimming="CharacterEllipsis"/>
+                                                              
+                                                              <Grid ColumnDefinitions="*,Auto">
+                                                                  <StackPanel Orientation="Horizontal" Spacing="10">
+                                                                      <TextBlock Text="{Binding Duration, StringFormat={}{0}m}" FontSize="11" Foreground="#AAAAAA"/>
+                                                                      <TextBlock Text="•" Foreground="#444444"/>
+                                                                      <TextBlock Text="{Binding SkillLevel}" FontSize="11" Foreground="#AAAAAA" TextTransform="Uppercase"/>
+                                                                  </StackPanel>
+                                                                  <TextBlock Grid.Column="1" Text="→" Foreground="#007ACC" FontWeight="Bold"/>
+                                                              </Grid>
+                                                          </StackPanel>
+                                                      </StackPanel>
+                                                  </Border>
+                                              </Button>
+                                          </DataTemplate>
+                                      </ItemsControl.ItemTemplate>
+                                  </ItemsControl>
+                              </StackPanel>
+                          </ScrollViewer>
+                      </Grid>
                 </Grid>
            </SplitView.Content>
        </SplitView>
