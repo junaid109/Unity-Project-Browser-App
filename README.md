@@ -6,9 +6,13 @@ A high-end Unity Project Manager desktop application built with **Avalonia UI** 
 
 - **Netflix-Style UI**: Modern dark mode theme with Acrylic/Mica effects and responsive project cards.
 - **Project Discovery**: Automatic scanning of "Watch Folders" for Unity projects by parsing `ProjectVersion.txt`.
-- **Unity Hub Integration**: Auto-detection of Unity Hub installations and manual path support.
+- **Unity Hub Integration**: Auto-detection of Unity Hub installations and support for modern Hub v3 formats (`projects-v1.json`, `editors-v2.json`).
+- **Unity Learn Portal**: Integrated search system for fetching and searching tutorials directly from `learn.unity.com`.
+- **Docs Hub**: Dedicated documentation portal with quick access to the Unity Manual and Scripting API.
 - **Package Manager**: Parse and display project dependencies from `Packages/manifest.json`.
-- **Details View**: Interactive overlay for exploring project dependencies and metadata.
+- **Details View**: Interactive overlay for exploring project dependencies, metadata, and launching editors.
+- **Tools**: Includes a "Clean Library" tool for resolving project corruption.
+- **Persistence**: Remembers your active tab, Documentation links, and watch folders across sessions using JSON.
 
 ## 🛠️ Technical Stack
 
@@ -23,10 +27,10 @@ A high-end Unity Project Manager desktop application built with **Avalonia UI** 
 
 ## 🚧 Roadmap
 
-- [ ] Project Editing (Rename, Change Unity Version)
-- [ ] "Clean Library" tool for corrupt projects
-- [ ] Direct "Open in Editor" button
-- [ ] Data persistence for user preferences via JSON
+- [ ] Project Editing (Rename UI, Change Unity Version UI)
+- [ ] Direct Unity Installation Download Integration
+- [ ] Theme Customization
+- [ ] Cloud Sync for Watch Folders
 
 ## 📝 License
 

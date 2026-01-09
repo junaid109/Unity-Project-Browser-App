@@ -48,6 +48,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isLoadingLearn;
 
+    [ObservableProperty]
+    private string _selectedDocsUrl = "https://docs.unity3d.com/Manual/index.html";
+
     public MainWindowViewModel()
     {
         _unityService = new UnityHubService();
@@ -71,6 +74,7 @@ public partial class MainWindowViewModel : ViewModelBase
         // 1. Load Config
         var config = await _configService.LoadConfigAsync();
         SelectedTab = config.SelectedTab;
+        SelectedDocsUrl = config.LastDocsUrl;
         
         foreach (var folder in config.WatchFolders)
         {
@@ -207,7 +211,8 @@ public partial class MainWindowViewModel : ViewModelBase
         var config = new AppConfig 
         { 
             WatchFolders = WatchFolders.ToList(),
-            SelectedTab = SelectedTab
+            SelectedTab = SelectedTab,
+            LastDocsUrl = SelectedDocsUrl
         };
         await _configService.SaveConfigAsync(config);
     }

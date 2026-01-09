@@ -1,9 +1,10 @@
-  Determining projects to restore...
-  All projects are up-to-date for restore.
-  UnityProjectManager -> E:\Work Files\Workspace\C#\Avalonia_Unity_Project_Browser\UnityProjectManager\bin\Debug\net9.0\UnityProjectManager.dll
+PS E:\Work Files\Workspace\C#\Avalonia_Unity_Project_Browser\UnityProjectManager> dotnet build
+Restore complete (0.6s)
+  UnityProjectManager net9.0 failed with 4 error(s) (3.0s)    
+    E:\Work Files\Workspace\C#\Avalonia_Unity_Project_Browser\UnityProjectManager\Views/MainWindow.axaml(187,28,187,28): Avalonia error AVLN2000: Unable to resolve type WebView from namespace using:Avalonia.WebView Line 187, position 28.
+    E:\Work Files\Workspace\C#\Avalonia_Unity_Project_Browser\UnityProjectManager\Views/MainWindow.axaml(187,28,187,28): Avalonia error AVLN2000: Unable to resolve type WebView from namespace using:Avalonia.WebView Line 187, position 28.
+    E:\Work Files\Workspace\C#\Avalonia_Unity_Project_Browser\UnityProjectManager\Views/MainWindow.axaml(187,28,187,28): Avalonia error AVLN2000: Unable to resolve type WebView from namespace using:Avalonia.WebView Line 187, position 28.
+    E:\Work Files\Workspace\C#\Avalonia_Unity_Project_Browser\UnityProjectManager\Views/MainWindow.axaml(187,28,187,28): Avalonia error AVLN2000: Unable to resolve suitable regular or attached property Source on type :.{Unknown type} Line 187, position 28.
 
-Build succeeded.
-    0 Warning(s)
-    0 Error(s)
-
-Time Elapsed 00:00:02.36
+Build failed with 4 error(s) in 4.4s
+PS E:\Work Files\Workspace\C#\Avalonia_Unity_Project_Browser\UnityProjectManager>
