@@ -33,4 +33,16 @@ public partial class MainWindow : Window
             }
         }
     }
+
+    private void TodoInput_KeyDown(object? sender, Avalonia.Input.KeyEventArgs e)
+    {
+        if (e.Key == Avalonia.Input.Key.Enter && sender is TextBox textBox)
+        {
+            if (!string.IsNullOrWhiteSpace(textBox.Text) && DataContext is MainWindowViewModel vm)
+            {
+                vm.AddTaskCommand.Execute(textBox.Text);
+                textBox.Text = "";
+            }
+        }
+    }
 }

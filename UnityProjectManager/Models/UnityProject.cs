@@ -27,5 +27,17 @@ namespace UnityProjectManager.Models
         private string? _versionType; // e.g., LTS, Beta
 
         public bool IsLts => VersionType?.Contains("LTS", StringComparison.OrdinalIgnoreCase) ?? false;
+
+        [ObservableProperty]
+        private string? _gitBranch;
+
+        [ObservableProperty]
+        private string? _gitStatus; // e.g., "3 changes", "Clean"
+
+        [ObservableProperty]
+        private bool _isGitRepo;
+        
+        [ObservableProperty]
+        private bool _hasGitChanges;
     }
 }

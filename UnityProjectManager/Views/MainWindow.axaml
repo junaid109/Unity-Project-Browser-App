@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:conv="using:UnityProjectManager.Converters"
         xmlns:ui="using:FluentAvalonia.UI.Controls"
-        mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
+        mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="700"
         x:Class="UnityProjectManager.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
@@ -22,115 +22,199 @@
     <Window.Resources>
         <conv:PathToBitmapConverter x:Key="PathToBitmapConverter"/>
         <conv:StringEqualsConverter x:Key="StringEqualsConverter"/>
+        
+        <SolidColorBrush x:Key="MetaBg" Color="#0F0F0F"/>
+        <SolidColorBrush x:Key="MetaSidebarBg" Color="#121212"/>
+        <SolidColorBrush x:Key="MetaHighlight" Color="#2A2A2A"/>
+        <SolidColorBrush x:Key="MetaHeader" Color="#F5F5F5"/>
+        <SolidColorBrush x:Key="MetaSubtext" Color="#888888"/>
+        <SolidColorBrush x:Key="MetaAccent" Color="#007ACC"/>
     </Window.Resources>
 
-    <Grid>
+    <Window.Styles>
+        <Style Selector="Button.side">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.15"/>
+                    <BrushTransition Property="Foreground" Duration="0:0:0.15"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.side:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#222222"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="Button.side.selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource MetaHighlight}"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="Button.side TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.side ui|SymbolIcon">
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="Margin" Value="0,0,12,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="TextBlock.h1">
+             <Setter Property="FontSize" Value="24"/>
+             <Setter Property="FontWeight" Value="Bold"/>
+             <Setter Property="Foreground" Value="{StaticResource MetaHeader}"/>
+             <Setter Property="Margin" Value="40,40,0,20"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid Background="{StaticResource MetaBg}">
        <!-- Main Layout -->
        <SplitView IsPaneOpen="True"
                   DisplayMode="Inline"
-                  OpenPaneLength="240"
-                  PaneBackground="#40000000"
+                  OpenPaneLength="250"
+                  PaneBackground="{StaticResource MetaSidebarBg}"
                   Background="Transparent">
            
            <SplitView.Pane>
-               <Border Margin="0,30,0,0" Padding="10">
-                   <StackPanel Spacing="5">
-                       <TextBlock Text="LIBRARY" FontWeight="Bold" Foreground="#888888" Margin="8,0,0,10" FontSize="12"/>
-                       
-                       <StackPanel Spacing="2">
-                           <Button Content="Projects" Command="{Binding SelectTabCommand}" CommandParameter="Projects"
-                                   HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12,8"
-                                   Background="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Projects', Converter={StaticResource StringEqualsConverter}}"/> <!-- Note: I need a color converter for highlighting, but for now just function -->
-                           <Button Content="Installs" Command="{Binding SelectTabCommand}" CommandParameter="Installs"
-                                   HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12,8" Background="Transparent"/>
-                           <Button Content="Learn" Command="{Binding SelectTabCommand}" CommandParameter="Learn"
-                                   HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12,8" Background="Transparent"/>
-                           <Button Content="Docs" Command="{Binding SelectTabCommand}" CommandParameter="Docs"
-                                   HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12,8" Background="Transparent"/>
+               <Border Padding="15,40,15,15">
+                   <StackPanel Spacing="25">
+                       <StackPanel Spacing="5">
+                           <TextBlock Text="MANAGEMENT" FontWeight="Bold" Foreground="{StaticResource MetaSubtext}" Margin="8,0,0,8" FontSize="10" LetterSpacing="1"/>
+                           
+                           <Button Classes="side" Command="{Binding SelectTabCommand}" CommandParameter="Projects"
+                                   Classes.selected="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Projects'}">
+                               <StackPanel Orientation="Horizontal">
+                                   <ui:SymbolIcon Symbol="Home"/>
+                                   <TextBlock Text="Projects"/>
+                               </StackPanel>
+                           </Button>
+                           
+                           <Button Classes="side" Command="{Binding SelectTabCommand}" CommandParameter="Installs"
+                                   Classes.selected="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Installs'}">
+                               <StackPanel Orientation="Horizontal">
+                                   <ui:SymbolIcon Symbol="List"/>
+                                   <TextBlock Text="Installs"/>
+                               </StackPanel>
+                           </Button>
+
+                           <Button Classes="side" Command="{Binding SelectTabCommand}" CommandParameter="Learn"
+                                   Classes.selected="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Learn'}">
+                               <StackPanel Orientation="Horizontal">
+                                   <ui:SymbolIcon Symbol="Library"/>
+                                   <TextBlock Text="Learn"/>
+                               </StackPanel>
+                           </Button>
+
+                           <Button Classes="side" Command="{Binding SelectTabCommand}" CommandParameter="Planner"
+                                   Classes.selected="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Planner'}">
+                               <StackPanel Orientation="Horizontal">
+                                   <ui:SymbolIcon Symbol="Calendar"/>
+                                   <TextBlock Text="Planner"/>
+                               </StackPanel>
+                           </Button>
+
+                           <Button Classes="side" Command="{Binding SelectTabCommand}" CommandParameter="Docs"
+                                   Classes.selected="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Docs'}">
+                               <StackPanel Orientation="Horizontal">
+                                   <ui:SymbolIcon Symbol="Document"/>
+                                   <TextBlock Text="Docs"/>
+                               </StackPanel>
+                           </Button>
                        </StackPanel>
                        
-                       <TextBlock Text="WATCH FOLDERS" FontWeight="Bold" Foreground="#888888" Margin="8,20,0,10" FontSize="12"/>
-                       <Button x:Name="AddFolderButton" Content="Add Folder" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12,8" />
+                       <StackPanel Spacing="8">
+                           <TextBlock Text="WATCH FOLDERS" FontWeight="Bold" Foreground="{StaticResource MetaSubtext}" Margin="8,0,0,8" FontSize="10" LetterSpacing="1"/>
+                           <Button x:Name="AddFolderButton" Classes="side">
+                               <StackPanel Orientation="Horizontal">
+                                   <ui:SymbolIcon Symbol="Add"/>
+                                   <TextBlock Text="Add Folder"/>
+                               </StackPanel>
+                           </Button>
+                       </StackPanel>
                        
-                       <TextBlock Text="TOOLS" FontWeight="Bold" Foreground="#888888" Margin="8,20,0,10" FontSize="12"/>
-                       <Button Content="Sync with Unity Hub" Command="{Binding SyncWithHubCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12,8">
-                           <Button.Styles>
-                               <Style Selector="Button">
-                                   <Setter Property="Background" Value="Transparent"/>
-                                   <Setter Property="BorderThickness" Value="1"/>
-                                   <Setter Property="BorderBrush" Value="#333333"/>
-                               </Style>
-                           </Button.Styles>
-                       </Button>
+                       <StackPanel Spacing="8" VerticalAlignment="Bottom">
+                           <TextBlock Text="TOOLS" FontWeight="Bold" Foreground="{StaticResource MetaSubtext}" Margin="8,0,0,8" FontSize="10" LetterSpacing="1"/>
+                           <Button Command="{Binding SyncWithHubCommand}" Classes="side">
+                               <StackPanel Orientation="Horizontal">
+                                   <ui:SymbolIcon Symbol="Sync"/>
+                                   <TextBlock Text="Sync Hub"/>
+                               </StackPanel>
+                           </Button>
+                       </StackPanel>
                    </StackPanel>
                </Border>
            </SplitView.Pane>
 
            <SplitView.Content>
-                <Grid Margin="0,30,0,0">
+                <Grid>
                      <!-- Page: Projects -->
                      <Grid RowDefinitions="Auto,*" IsVisible="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Projects'}">
-                          <TextBlock Text="Projects" FontSize="28" FontWeight="SemiLight" Margin="40,20,0,20" />
+                          <TextBlock Text="All Projects" Classes="h1" />
                           <ScrollViewer Grid.Row="1" Padding="40,0,40,40">
-                              <ItemsControl ItemsSource="{Binding Projects}">
-                                  <ItemsControl.ItemsPanel>
-                                      <ItemsPanelTemplate>
-                                          <WrapPanel />
-                                      </ItemsPanelTemplate>
-                                  </ItemsControl.ItemsPanel>
-                                  <ItemsControl.ItemTemplate>
-                                      <DataTemplate>
-                                          <views:ProjectCardView />
-                                      </DataTemplate>
-                                  </ItemsControl.ItemTemplate>
-                              </ItemsControl>
+                               <ItemsControl ItemsSource="{Binding Projects}">
+                                   <ItemsControl.ItemsPanel>
+                                       <ItemsPanelTemplate>
+                                           <WrapPanel />
+                                       </ItemsPanelTemplate>
+                                   </ItemsControl.ItemsPanel>
+                                   <ItemsControl.ItemTemplate>
+                                       <DataTemplate>
+                                           <views:ProjectCardView />
+                                       </DataTemplate>
+                                   </ItemsControl.ItemTemplate>
+                               </ItemsControl>
                           </ScrollViewer>
                      </Grid>
 
                      <!-- Page: Installs -->
                      <Grid RowDefinitions="Auto,*" IsVisible="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Installs'}">
-                          <TextBlock Text="Installs" FontSize="28" FontWeight="SemiLight" Margin="40,20,0,20" />
+                          <TextBlock Text="Unity Installations" Classes="h1" />
                           <ScrollViewer Grid.Row="1" Padding="40,0,40,40">
-                              <ItemsControl ItemsSource="{Binding InstalledEditors}">
-                                  <ItemsControl.ItemTemplate>
-                                      <DataTemplate>
-                                          <Border Background="#1A1A1A" Margin="0,0,0,8" Padding="20" CornerRadius="8" BorderBrush="#333333" BorderThickness="1">
-                                              <Grid ColumnDefinitions="*,Auto">
-                                                  <StackPanel Spacing="5">
-                                                      <TextBlock Text="{Binding}" FontSize="14" FontWeight="SemiBold"/>
-                                                      <TextBlock Text="Unity Editor" FontSize="11" Foreground="#666666"/>
-                                                  </StackPanel>
-                                                  <Button Grid.Column="1" Content="Locate" Background="Transparent" BorderBrush="#444444" Padding="15,5"/>
-                                              </Grid>
-                                          </Border>
-                                      </DataTemplate>
-                                  </ItemsControl.ItemTemplate>
-                              </ItemsControl>
+                               <ItemsControl ItemsSource="{Binding InstalledEditors}">
+                                   <ItemsControl.ItemTemplate>
+                                       <DataTemplate>
+                                           <Border Background="#1C1C1C" Margin="0,0,0,10" Padding="20" CornerRadius="10" BorderBrush="#252525" BorderThickness="1">
+                                               <Grid ColumnDefinitions="*,Auto">
+                                                   <StackPanel Spacing="4">
+                                                       <TextBlock Text="{Binding}" FontSize="16" FontWeight="SemiBold" Foreground="White" />
+                                                       <TextBlock Text="Detected in Unity Hub" FontSize="12" Foreground="{StaticResource MetaSubtext}" />
+                                                   </StackPanel>
+                                                   <Button Grid.Column="1" Content="Locate" Background="#2A2A2A" Padding="15,6" CornerRadius="4"/>
+                                               </Grid>
+                                           </Border>
+                                       </DataTemplate>
+                                   </ItemsControl.ItemTemplate>
+                               </ItemsControl>
                           </ScrollViewer>
                      </Grid>
 
                       <!-- Page: Learn -->
                       <Grid RowDefinitions="Auto,Auto,*" IsVisible="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Learn'}">
-                          <TextBlock Text="Unity Learn" FontSize="28" FontWeight="SemiLight" Margin="40,20,0,10" />
+                          <TextBlock Text="Unity Learn" Classes="h1" Margin="40,40,0,10"/>
                           
                           <!-- Search Bar -->
-                          <Border Grid.Row="1" Margin="40,10,40,20" Background="#1A1A1A" CornerRadius="8" BorderBrush="#333333" BorderThickness="1">
+                          <Border Grid.Row="1" Margin="40,10,40,20" Background="#1C1C1C" CornerRadius="10" BorderBrush="#252525" BorderThickness="1">
                               <Grid ColumnDefinitions="*,Auto">
                                   <TextBox Text="{Binding LearnSearchQuery}" Watermark="Search tutorials, courses, and pathways..." 
-                                           Classes="transparent" BorderThickness="0" Margin="10,5" VerticalContentAlignment="Center">
+                                           Background="Transparent" BorderThickness="0" Margin="10,5" VerticalContentAlignment="Center">
                                       <TextBox.KeyBindings>
                                           <KeyBinding Gesture="Enter" Command="{Binding SearchLearnContentCommand}" />
                                       </TextBox.KeyBindings>
                                   </TextBox>
                                   <Button Grid.Column="1" Command="{Binding SearchLearnContentCommand}" Background="Transparent" Padding="15,5">
-                                      <TextBlock Text="Search" Foreground="#007ACC" FontWeight="SemiBold"/>
+                                      <TextBlock Text="Search" Foreground="{StaticResource MetaAccent}" FontWeight="SemiBold"/>
                                   </Button>
                               </Grid>
                           </Border>
 
                           <ScrollViewer Grid.Row="2" Padding="40,0,40,40">
                               <StackPanel>
-                                  <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsLoadingLearn}" Height="2" Margin="0,0,0,10" Foreground="#007ACC"/>
+                                  <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsLoadingLearn}" Height="2" Margin="0,0,0,15" Foreground="{StaticResource MetaAccent}"/>
                                   
                                   <ItemsControl ItemsSource="{Binding LearnContents}">
                                       <ItemsControl.ItemsPanel>
@@ -143,10 +227,10 @@
                                               <Button Background="Transparent" Padding="0" Margin="0,0,20,20" 
                                                       Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenLearnUrlCommand}"
                                                       CommandParameter="{Binding Url}">
-                                                  <Border Width="280" Background="#1A1A1A" CornerRadius="12" ClipToBounds="True" BorderBrush="#333333" BorderThickness="1">
+                                                  <Border Width="280" Background="#1C1C1C" CornerRadius="12" ClipToBounds="True" BorderBrush="#252525" BorderThickness="1">
                                                       <StackPanel>
                                                           <!-- Thumbnail -->
-                                                          <Panel Height="150" Background="#111111">
+                                                          <Panel Height="150" Background="#0F0F0F">
                                                               <Image Source="{Binding ThumbnailUrl, Converter={StaticResource PathToBitmapConverter}}" 
                                                                      Stretch="UniformToFill"/>
                                                               <!-- Badge -->
@@ -158,8 +242,8 @@
                                                           
                                                            <Border Padding="15">
                                                                <StackPanel Spacing="8">
-                                                                   <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="Bold" TextWrapping="Wrap" Height="44" MaxLines="2"/>
-                                                                   <TextBlock Text="{Binding Description}" FontSize="12" Foreground="#888888" TextWrapping="Wrap" Height="50" MaxLines="3" TextTrimming="CharacterEllipsis"/>
+                                                                   <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="Bold" TextWrapping="Wrap" Height="44" MaxLines="2" Foreground="White"/>
+                                                                   <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{StaticResource MetaSubtext}" TextWrapping="Wrap" Height="50" MaxLines="3" TextTrimming="CharacterEllipsis"/>
                                                                    
                                                                    <Grid ColumnDefinitions="*,Auto">
                                                                        <StackPanel Orientation="Horizontal" Spacing="10">
@@ -167,7 +251,7 @@
                                                                            <TextBlock Text="•" Foreground="#444444"/>
                                                                            <TextBlock Text="{Binding SkillLevel}" FontSize="11" Foreground="#AAAAAA" />
                                                                        </StackPanel>
-                                                                       <TextBlock Grid.Column="1" Text="→" Foreground="#007ACC" FontWeight="Bold"/>
+                                                                       <TextBlock Grid.Column="1" Text="→" Foreground="{StaticResource MetaAccent}" FontWeight="Bold"/>
                                                                    </Grid>
                                                                </StackPanel>
                                                            </Border>
@@ -184,106 +268,215 @@
                       <!-- Page: Docs -->
                       <Grid IsVisible="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Docs'}">
                           <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="20">
-                              <Border Background="#1A1A1A" Padding="40" CornerRadius="20" BorderBrush="#333333" BorderThickness="1">
+                              <Border Background="#1C1C1C" Padding="40" CornerRadius="20" BorderBrush="#252525" BorderThickness="1">
                                   <StackPanel Spacing="15" MaxWidth="400">
-                                      <TextBlock Text="Unity Documentation" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                      <TextBlock Text="Unity Documentation" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Foreground="White"/>
                                       <TextBlock Text="Access the full Unity Manual and Scripting API. We'll open this in your default browser for the best experience." 
-                                                 TextWrapping="Wrap" TextAlignment="Center" Foreground="#888888"/>
+                                                 TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource MetaSubtext}"/>
                                       
                                       <Button Content="Open Unity Manual" 
                                               Command="{Binding OpenLearnUrlCommand}" 
                                               CommandParameter="https://docs.unity3d.com/Manual/index.html"
                                               HorizontalAlignment="Center" Padding="30,12" 
-                                              Background="#007ACC" Foreground="White" FontWeight="Bold"/>
+                                              Background="{StaticResource MetaAccent}" Foreground="White" FontWeight="Bold" CornerRadius="6"/>
                                       
-                                      <Separator Margin="0,10" Background="#333333"/>
+                                      <Separator Margin="0,10" Background="#252525"/>
                                       
-                                      <TextBlock Text="Quick Links" FontWeight="Bold" Margin="0,10,0,5"/>
+                                      <TextBlock Text="Quick Links" FontWeight="Bold" Margin="0,10,0,5" Foreground="White"/>
                                       <StackPanel Spacing="5">
-                                          <Button Content="Scripting API Reference" Command="{Binding OpenLearnUrlCommand}" CommandParameter="https://docs.unity3d.com/ScriptReference/index.html" Background="Transparent" Foreground="#007ACC"/>
-                                          <Button Content="Unity Learn" Command="{Binding OpenLearnUrlCommand}" CommandParameter="https://learn.unity.com" Background="Transparent" Foreground="#007ACC"/>
+                                          <Button Content="Scripting API Reference" Command="{Binding OpenLearnUrlCommand}" CommandParameter="https://docs.unity3d.com/ScriptReference/index.html" Background="Transparent" Foreground="{StaticResource MetaAccent}"/>
+                                          <Button Content="Unity Learn" Command="{Binding OpenLearnUrlCommand}" CommandParameter="https://learn.unity.com" Background="Transparent" Foreground="{StaticResource MetaAccent}"/>
                                       </StackPanel>
                                   </StackPanel>
                               </Border>
                           </StackPanel>
+                      </Grid>
+
+                      <!-- Page: Planner -->
+                      <Grid IsVisible="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Planner'}" RowDefinitions="Auto,*">
+                          <!-- Board Header -->
+                          <Border Background="#121212" Padding="25,15" BorderBrush="#252525" BorderThickness="0,0,0,1">
+                              <Grid ColumnDefinitions="*,Auto">
+                                  <StackPanel Orientation="Horizontal" Spacing="20">
+                                      <TextBlock Text="Project Planner" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" Foreground="White"/>
+                                      <ComboBox ItemsSource="{Binding Boards}" SelectedItem="{Binding SelectedBoard}" Width="200" Background="#1C1C1C" BorderBrush="#252525">
+                                          <ComboBox.ItemTemplate>
+                                              <DataTemplate>
+                                                  <TextBlock Text="{Binding Name}"/>
+                                              </DataTemplate>
+                                          </ComboBox.ItemTemplate>
+                                      </ComboBox>
+                                      <Button Content="+" Command="{Binding AddBoardCommand}" CommandParameter="New Board" Width="40" Background="#1C1C1C"/>
+                                  </StackPanel>
+                                  <Button Grid.Column="1" Content="Delete Board" Command="{Binding DeleteBoardCommand}" 
+                                          CommandParameter="{Binding SelectedBoard}" Foreground="#FF4444" Background="Transparent"/>
+                              </Grid>
+                          </Border>
+
+                          <!-- Kanban Board -->
+                          <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                              <Grid ColumnDefinitions="360,360,360" Margin="25">
+                                  <!-- Todo Column -->
+                                  <Border Grid.Column="0" Background="#161616" CornerRadius="12" Margin="0,0,20,0" Padding="15">
+                                      <Grid RowDefinitions="Auto,*,Auto">
+                                          <TextBlock Text="TO DO" FontWeight="Bold" Foreground="{StaticResource MetaSubtext}" Margin="8,0,0,15" FontSize="11" LetterSpacing="1"/>
+                                          <ListBox Grid.Row="1" ItemsSource="{Binding TodoTasks}" Background="Transparent" BorderThickness="0">
+                                              <ListBox.ItemTemplate>
+                                                  <DataTemplate>
+                                                      <Border Background="#222222" CornerRadius="8" Padding="12" Margin="0,0,0,12" BorderBrush="#2D2D2D" BorderThickness="1">
+                                                          <StackPanel Spacing="8">
+                                                              <Border Height="4" Width="40" Background="{Binding Color}" HorizontalAlignment="Left" CornerRadius="2"/>
+                                                              <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="White" FontSize="14"/>
+                                                              <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{StaticResource MetaSubtext}" MaxLines="2" TextWrapping="Wrap"/>
+                                                              <Grid ColumnDefinitions="*,Auto" Margin="0,5,0,0">
+                                                                  <Button Content="Start" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MoveTaskCommand}" CommandParameter="{Binding}" 
+                                                                          Padding="12,4" FontSize="12" Background="{StaticResource MetaAccent}" Foreground="White" CornerRadius="4"/>
+                                                                  <Button Grid.Column="1" Content="✕" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteTaskCommand}" CommandParameter="{Binding}" Background="Transparent" Foreground="#666666"/>
+                                                              </Grid>
+                                                          </StackPanel>
+                                                      </Border>
+                                                  </DataTemplate>
+                                              </ListBox.ItemTemplate>
+                                          </ListBox>
+                                          <TextBox Grid.Row="2" Watermark="Add task..." Name="TodoInput" KeyDown="TodoInput_KeyDown" 
+                                                   Background="#1C1C1C" BorderBrush="#252525" CornerRadius="6" Margin="0,10,0,0"/>
+                                      </Grid>
+                                  </Border>
+
+                                  <!-- Doing Column -->
+                                  <Border Grid.Column="1" Background="#161616" CornerRadius="12" Margin="0,0,20,0" Padding="15">
+                                      <Grid RowDefinitions="Auto,*,Auto">
+                                          <TextBlock Text="DOING" FontWeight="Bold" Foreground="{StaticResource MetaSubtext}" Margin="8,0,0,15" FontSize="11" LetterSpacing="1"/>
+                                          <ListBox Grid.Row="1" ItemsSource="{Binding DoingTasks}" Background="Transparent" BorderThickness="0">
+                                              <ListBox.ItemTemplate>
+                                                  <DataTemplate>
+                                                      <Border Background="#222222" CornerRadius="8" Padding="12" Margin="0,0,0,12" BorderBrush="#2D2D2D" BorderThickness="1">
+                                                          <StackPanel Spacing="8">
+                                                              <Border Height="4" Width="40" Background="{Binding Color}" HorizontalAlignment="Left" CornerRadius="2"/>
+                                                              <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="White" FontSize="14"/>
+                                                              <Grid ColumnDefinitions="*,Auto" Margin="0,5,0,0">
+                                                                  <Button Content="Done" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MoveTaskCommand}" CommandParameter="{Binding}" 
+                                                                          Padding="12,4" FontSize="12" Background="{StaticResource MetaAccent}" Foreground="White" CornerRadius="4"/>
+                                                                  <Button Grid.Column="1" Content="✕" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteTaskCommand}" CommandParameter="{Binding}" Background="Transparent" Foreground="#666666"/>
+                                                              </Grid>
+                                                          </StackPanel>
+                                                      </Border>
+                                                  </DataTemplate>
+                                              </ListBox.ItemTemplate>
+                                          </ListBox>
+                                      </Grid>
+                                  </Border>
+
+                                  <!-- Done Column -->
+                                  <Border Grid.Column="2" Background="#161616" CornerRadius="12" Padding="15">
+                                      <Grid RowDefinitions="Auto,*,Auto">
+                                          <TextBlock Text="DONE" FontWeight="Bold" Foreground="{StaticResource MetaSubtext}" Margin="8,0,0,15" FontSize="11" LetterSpacing="1"/>
+                                          <ListBox Grid.Row="1" ItemsSource="{Binding DoneTasks}" Background="Transparent" BorderThickness="0">
+                                              <ListBox.ItemTemplate>
+                                                  <DataTemplate>
+                                                      <Border Background="#1C1C1C" CornerRadius="8" Padding="12" Margin="0,0,0,12" Opacity="0.6">
+                                                          <StackPanel Spacing="8">
+                                                              <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextDecorations="Strikethrough" Foreground="#888888" FontSize="14"/>
+                                                              <Grid ColumnDefinitions="*,Auto">
+                                                                  <Button Content="Reset" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MoveTaskCommand}" CommandParameter="{Binding}" 
+                                                                          Padding="12,4" FontSize="12" Background="#333333" Foreground="White" CornerRadius="4"/>
+                                                                  <Button Grid.Column="1" Content="✕" Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteTaskCommand}" CommandParameter="{Binding}" Background="Transparent" Foreground="#666666"/>
+                                                              </Grid>
+                                                          </StackPanel>
+                                                      </Border>
+                                                  </DataTemplate>
+                                              </ListBox.ItemTemplate>
+                                          </ListBox>
+                                      </Grid>
+                                  </Border>
+                              </Grid>
+                          </ScrollViewer>
                       </Grid>
                 </Grid>
            </SplitView.Content>
        </SplitView>
        
        <!-- Details Overlay -->
-       <Grid IsVisible="{Binding IsDetailsOpen}" Background="#AA000000">
+       <Grid IsVisible="{Binding IsDetailsOpen}" Background="#CC000000">
            <!-- Click background to close -->
            <Button Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" 
                    Command="{Binding CloseProjectDetailsCommand}" />
            
            <!-- Content Modal -->
-           <Border Background="#252525" Width="900" Height="500" CornerRadius="12" BoxShadow="0 10 30 0 #000000">
-               <Grid ColumnDefinitions="300,*" RowDefinitions="Auto,*">
+           <Border Background="#1C1C1C" Width="950" Height="550" CornerRadius="16" BoxShadow="0 20 50 0 #000000" BorderBrush="#252525" BorderThickness="1">
+               <Grid ColumnDefinitions="320,*" RowDefinitions="Auto,*">
                    
                    <!-- Left Sidebar: Project Info -->
-                   <Border Grid.RowSpan="2" Background="#1E1E1E" CornerRadius="12,0,0,12" Padding="20">
-                       <StackPanel Spacing="16">
+                   <Border Grid.RowSpan="2" Background="#121212" CornerRadius="16,0,0,16" Padding="30">
+                       <StackPanel Spacing="20">
                            <!-- Large Thumbnail -->
-                           <Border CornerRadius="8" ClipToBounds="True" Height="160">
+                           <Border CornerRadius="12" ClipToBounds="True" Height="180">
                                <Image Source="{Binding SelectedProject.ThumbnailPath, Converter={StaticResource PathToBitmapConverter}}" 
                                       Stretch="UniformToFill"/>
                            </Border>
                            
-                           <TextBlock Text="{Binding SelectedProject.Name}" FontSize="24" FontWeight="Bold" TextWrapping="Wrap"/>
+                           <TextBlock Text="{Binding SelectedProject.Name}" FontSize="28" FontWeight="Bold" Foreground="White" TextWrapping="Wrap"/>
                            
-                           <StackPanel Spacing="4">
-                               <TextBlock Text="UNITY VERSION" FontWeight="Bold" FontSize="10" Foreground="#888888"/>
-                               <TextBlock Text="{Binding SelectedProject.UnityVersion}" FontSize="14"/>
+                           <StackPanel Spacing="6">
+                               <TextBlock Text="UNITY VERSION" FontWeight="Bold" FontSize="10" Foreground="{StaticResource MetaSubtext}" LetterSpacing="1"/>
+                               <TextBlock Text="{Binding SelectedProject.UnityVersion}" FontSize="16" Foreground="White"/>
                            </StackPanel>
                            
-                           <StackPanel Spacing="4">
-                               <TextBlock Text="LOCATION" FontWeight="Bold" FontSize="10" Foreground="#888888"/>
-                               <TextBlock Text="{Binding SelectedProject.Path}" FontSize="12" Foreground="#CCCCCC" TextWrapping="Wrap"/>
+                           <StackPanel Spacing="6">
+                               <TextBlock Text="LOCATION" FontWeight="Bold" FontSize="10" Foreground="{StaticResource MetaSubtext}" LetterSpacing="1"/>
+                               <TextBlock Text="{Binding SelectedProject.Path}" FontSize="13" Foreground="#AAAAAA" TextWrapping="Wrap"/>
                            </StackPanel>
 
-                           <Rectangle Height="1" Fill="#333333" Margin="0,10"/>
+                           <Rectangle Height="1" Fill="#252525" Margin="0,15"/>
 
-                           <Button Content="Open in Editor" Command="{Binding OpenProjectCommand}" Classes="accent" HorizontalAlignment="Stretch" Padding="0,12"/>
+                           <Button Content="Open in Editor" Command="{Binding OpenProjectCommand}" 
+                                   HorizontalAlignment="Stretch" Padding="0,15" Background="{StaticResource MetaAccent}" 
+                                   Foreground="White" FontWeight="Bold" CornerRadius="8"/>
                            
                            <Grid ColumnDefinitions="*,Auto" Margin="0,10,0,0">
                                <Button Content="Clean Library" Command="{Binding CleanLibraryCommand}" 
-                                       HorizontalAlignment="Stretch" Margin="0,0,4,0"/>
-                               <!-- Potential drop down or more options -->
-                               <Button Grid.Column="1" Content="..." Width="40"/>
+                                       HorizontalAlignment="Stretch" Margin="0,0,10,0" Padding="0,12" Background="#2A2A2A" CornerRadius="8"/>
+                               <Button Grid.Column="1" Content="..." Width="45" Height="45" Background="#2A2A2A" CornerRadius="8"/>
                            </Grid>
 
-                           <Button Content="Close Details" Command="{Binding CloseProjectDetailsCommand}" 
-                                   HorizontalAlignment="Stretch" Margin="0,10,0,0" Background="Transparent" BorderBrush="#333333"/>
+                           <Button Content="Close" Command="{Binding CloseProjectDetailsCommand}" 
+                                   HorizontalAlignment="Stretch" Margin="0,15,0,0" Background="Transparent" 
+                                   BorderBrush="#2A2A2A" BorderThickness="1" CornerRadius="8"/>
                        </StackPanel>
                    </Border>
                    
                    <!-- Right Content: Packages -->
-                   <Border Grid.Column="1" Grid.Row="0" Padding="30,20" BorderBrush="#333333" BorderThickness="0,0,0,1">
+                   <Border Grid.Column="1" Grid.Row="0" Padding="40,30" BorderBrush="#252525" BorderThickness="0,0,0,1">
                        <Grid ColumnDefinitions="*,Auto">
-                           <TextBlock Text="Installed Packages" FontSize="20" FontWeight="SemiLight" VerticalAlignment="Center"/>
-                           <!-- Future: Search Box -->
-                           <Button Grid.Column="1" Content="Add Package" />
+                           <TextBlock Text="Installed Packages" FontSize="22" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                           <Button Grid.Column="1" Content="Add Package" Background="#2A2A2A" Padding="20,10" CornerRadius="6"/>
                        </Grid>
                    </Border>
                    
-                   <ListBox Grid.Column="1" Grid.Row="1" ItemsSource="{Binding Packages}" Background="Transparent" Margin="0,10">
+                   <ListBox Grid.Column="1" Grid.Row="1" ItemsSource="{Binding Packages}" Background="Transparent" Margin="20" Padding="20">
                        <ListBox.Styles>
                            <Style Selector="ListBoxItem">
-                               <Setter Property="Padding" Value="20,10"/>
+                               <Setter Property="Padding" Value="0,0,0,15"/>
+                               <Setter Property="Background" Value="Transparent"/>
+                           </Style>
+                           <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+                               <Setter Property="Background" Value="Transparent"/>
                            </Style>
                        </ListBox.Styles>
                        <ListBox.ItemTemplate>
                            <DataTemplate>
-                               <Grid ColumnDefinitions="*,100,Auto">
-                                   <StackPanel Spacing="2">
-                                       <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
-                                   </StackPanel>
-                                   
-                                   <TextBlock Grid.Column="1" Text="{Binding Version}" Foreground="#AAFFFFFF" VerticalAlignment="Center"/>
-                                   
-                                   <Button Grid.Column="2" Content="Remove" FontSize="11" Padding="8,4" Background="#333333"/>
-                               </Grid>
+                               <Border Background="#222222" CornerRadius="10" Padding="20,15" BorderBrush="#2D2D2D" BorderThickness="1">
+                                   <Grid ColumnDefinitions="*,120,Auto">
+                                       <StackPanel Spacing="2">
+                                           <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="15" Foreground="White"/>
+                                           <TextBlock Text="Standard Unity Package" FontSize="11" Foreground="{StaticResource MetaSubtext}"/>
+                                       </StackPanel>
+                                       
+                                       <TextBlock Grid.Column="1" Text="{Binding Version}" Foreground="{StaticResource MetaAccent}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                       
+                                       <Button Grid.Column="2" Content="✕" FontSize="12" Padding="12,8" Background="Transparent" Foreground="#666666"/>
+                                   </Grid>
+                               </Border>
                            </DataTemplate>
                        </ListBox.ItemTemplate>
                    </ListBox>

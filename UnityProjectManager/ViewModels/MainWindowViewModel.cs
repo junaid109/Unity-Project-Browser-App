@@ -17,12 +17,15 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IConfigService _configService;
     private readonly IProjectEditorService _editorService;
     private readonly ILearnService _learnService;
+    private readonly GitService _gitService; // Using concrete class for now
 
     [ObservableProperty]
     private ObservableCollection<UnityProject> _projects;
 
     [ObservableProperty]
     private UnityProject? _selectedProject;
+// ... (skip unchanged lines) ...
+
 
     [ObservableProperty]
     private string _selectedTab = "Projects";
@@ -51,18 +54,35 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string _selectedDocsUrl = "https://docs.unity3d.com/Manual/index.html";
 
+    [ObservableProperty]
+    private ObservableCollection<ProjectBoard> _boards;
+
+    [ObservableProperty]
+    private ProjectBoard? _selectedBoard;
+
+    [ObservableProperty]
+    private ObservableCollection<BoardTask> _todoTasks = new();
+
+    [ObservableProperty]
+    private ObservableCollection<BoardTask> _doingTasks = new();
+
+    [ObservableProperty]
+    private ObservableCollection<BoardTask> _doneTasks = new();
+
     public MainWindowViewModel()
     {
         _unityService = new UnityHubService();
         _packageService = new PackageService();
         _configService = new ConfigService();
         _editorService = new ProjectEditorService();
+        _gitService = new GitService();
 
         _watchFolders = new ObservableCollection<string>();
         _packages = new ObservableCollection<UnityPackage>();
         _projects = new ObservableCollection<UnityProject>();
         _installedEditors = new ObservableCollection<string>();
         _learnContents = new ObservableCollection<LearnContent>();
+        _boards = new ObservableCollection<ProjectBoard>();
         _learnService = new LearnService();
         
         // Initial Load
@@ -81,6 +101,22 @@ public partial class MainWindowViewModel : ViewModelBase
             if (System.IO.Directory.Exists(folder))
                 WatchFolders.Add(folder);
         }
+
+        foreach (var board in config.Boards)
+        {
+            Boards.Add(board);
+        }
+
+        if (Boards.Count == 0)
+        {
+            var defaultBoard = new ProjectBoard { Name = "Main Project Board" };
+            defaultBoard.Tasks.Add(new BoardTask { Title = "Setup Unity Project", Description = "Initialize git and project folders", Status = BoardTaskStatus.Todo });
+            defaultBoard.Tasks.Add(new BoardTask { Title = "Design System", Description = "Create UI components", Status = BoardTaskStatus.Doing });
+            Boards.Add(defaultBoard);
+        }
+
+        SelectedBoard = Boards.FirstOrDefault();
+        UpdateBoardColumns();
 
         // Add default if empty
         if (WatchFolders.Count == 0)
@@ -151,6 +187,12 @@ public partial class MainWindowViewModel : ViewModelBase
         var editors = await _unityService.GetInstalledEditorsAsync();
         InstalledEditors.Clear();
         foreach (var editor in editors) InstalledEditors.Add(editor);
+
+        // 4. Update Git Info (Background)
+        foreach (var project in Projects)
+        {
+            await _gitService.UpdateGitInfoAsync(project);
+        }
     }
 
     private void MergeProjects(IEnumerable<UnityProject> newProjects)
@@ -189,6 +231,30 @@ public partial class MainWindowViewModel : ViewModelBase
         SaveConfig();
     }
 
+    partial void OnSelectedBoardChanged(ProjectBoard? value)
+    {
+        UpdateBoardColumns();
+    }
+
+    private void UpdateBoardColumns()
+    {
+        TodoTasks.Clear();
+        DoingTasks.Clear();
+        DoneTasks.Clear();
+
+        if (SelectedBoard == null) return;
+
+        foreach (var task in SelectedBoard.Tasks)
+        {
+            switch (task.Status)
+            {
+                case BoardTaskStatus.Todo: TodoTasks.Add(task); break;
+                case BoardTaskStatus.Doing: DoingTasks.Add(task); break;
+                case BoardTaskStatus.Done: DoneTasks.Add(task); break;
+            }
+        }
+    }
+
     [RelayCommand]
     private async Task SyncWithHub()
     {
@@ -212,7 +278,8 @@ public partial class MainWindowViewModel : ViewModelBase
         { 
             WatchFolders = WatchFolders.ToList(),
             SelectedTab = SelectedTab,
-            LastDocsUrl = SelectedDocsUrl
+            LastDocsUrl = SelectedDocsUrl,
+            Boards = Boards.ToList()
         };
         await _configService.SaveConfigAsync(config);
     }
@@ -298,5 +365,53 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             Console.WriteLine($"Failed to open URL: {ex.Message}");
         }
+    }
+
+    [RelayCommand]
+    private void AddBoard(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) name = "New Board";
+        var board = new ProjectBoard { Name = name };
+        Boards.Add(board);
+        SelectedBoard = board;
+        SaveConfig();
+    }
+
+    [RelayCommand]
+    private void AddTask(string title)
+    {
+        if (SelectedBoard == null || string.IsNullOrWhiteSpace(title)) return;
+        var task = new BoardTask { Title = title };
+        SelectedBoard.Tasks.Add(task);
+        UpdateBoardColumns();
+        SaveConfig();
+    }
+
+    [RelayCommand]
+    private void MoveTask(BoardTask task)
+    {
+        if (task.Status == BoardTaskStatus.Todo) task.Status = BoardTaskStatus.Doing;
+        else if (task.Status == BoardTaskStatus.Doing) task.Status = BoardTaskStatus.Done;
+        else task.Status = BoardTaskStatus.Todo;
+        
+        UpdateBoardColumns();
+        SaveConfig();
+    }
+
+    [RelayCommand]
+    private void DeleteBoard(ProjectBoard board)
+    {
+        Boards.Remove(board);
+        if (SelectedBoard == board) SelectedBoard = Boards.FirstOrDefault();
+        SaveConfig();
+    }
+
+    [RelayCommand]
+    private void DeleteTask(BoardTask task)
+    {
+        if (SelectedBoard == null) return;
+        SelectedBoard.Tasks.Remove(task);
+        UpdateBoardColumns();
+        SaveConfig();
     }
 }

@@ -17,10 +17,11 @@
     <UserControl.Styles>
         <!-- Card Base Style -->
         <Style Selector="Border.Card">
-            <Setter Property="Background" Value="#1E1E1E"/>
-            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Background" Value="#1C1C1C"/>
+            <Setter Property="CornerRadius" Value="10"/>
             <Setter Property="ClipToBounds" Value="True"/>
-            <Setter Property="BoxShadow" Value="0 4 8 0 #000000"/>
+            <Setter Property="BorderBrush" Value="#252525"/>
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="RenderTransform" Value="scale(1)"/>
             <Setter Property="Transitions">
                 <Transitions>
@@ -114,10 +115,28 @@
                 </StackPanel>
             </Grid>
 
+            <!-- Git Badge (Top Right) -->
+            <Border VerticalAlignment="Top" HorizontalAlignment="Right"
+                    Background="#CC111111" CornerRadius="0,10,0,8" Padding="10,5"
+                    IsVisible="{Binding IsGitRepo}" Margin="0,0,0,0">
+                <ToolTip.Tip>
+                    <TextBlock Text="{Binding GitStatus}"/>
+                </ToolTip.Tip>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <!-- Branch Icon & Name -->
+                    <ui:SymbolIcon Symbol="Code" FontSize="12" Foreground="#999999"/>
+                    <TextBlock Text="{Binding GitBranch}" FontSize="11" Foreground="#EEEEEE" FontWeight="SemiBold"/>
+                    
+                    <!-- Status Dot -->
+                    <Ellipse Width="8" Height="8" Fill="#4CAF50" IsVisible="{Binding !HasGitChanges}" ToolTip.Tip="Clean working tree" Margin="4,0,0,0"/>
+                    <Ellipse Width="8" Height="8" Fill="#FFC107" IsVisible="{Binding HasGitChanges}" ToolTip.Tip="Uncommitted changes" Margin="4,0,0,0"/>
+                </StackPanel>
+            </Border>
+
             <!-- Hover Play/Open Overlay -->
             <Button Classes="PlayButton" HorizontalAlignment="Center" VerticalAlignment="Center"
-                    Width="50" Height="50" CornerRadius="25"
-                    Background="#E50914" Foreground="White" Padding="0" BorderThickness="0"
+                    Width="40" Height="40" CornerRadius="20"
+                    Background="#007ACC" Foreground="White" Padding="0" BorderThickness="0"
                     Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenProjectDetailsCommand}"
                     CommandParameter="{Binding .}">
                 <ui:SymbolIcon Symbol="Play" FontSize="20"/>
