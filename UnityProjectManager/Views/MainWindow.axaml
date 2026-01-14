@@ -110,6 +110,14 @@
                                </StackPanel>
                            </Button>
 
+                           <Button Classes="side" Command="{Binding SelectTabCommand}" CommandParameter="Inspiration"
+                                   Classes.selected="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Inspiration'}">
+                               <StackPanel Orientation="Horizontal">
+                                   <ui:SymbolIcon Symbol="Globe"/>
+                                   <TextBlock Text="Made with Unity"/>
+                               </StackPanel>
+                           </Button>
+
                            <Button Classes="side" Command="{Binding SelectTabCommand}" CommandParameter="Planner"
                                    Classes.selected="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Planner'}">
                                <StackPanel Orientation="Horizontal">
@@ -172,9 +180,15 @@
                      </Grid>
 
                      <!-- Page: Installs -->
-                     <Grid RowDefinitions="Auto,*" IsVisible="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Installs'}">
+                     <Grid RowDefinitions="Auto,Auto,*" IsVisible="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Installs'}">
                           <TextBlock Text="Unity Installations" Classes="h1" />
-                          <ScrollViewer Grid.Row="1" Padding="40,0,40,40">
+                          <Button x:Name="AddEditorPathButton" Grid.Row="1" Margin="40,0,40,20" HorizontalAlignment="Right" Background="#2A2A2A" Padding="15,8" CornerRadius="6">
+                              <StackPanel Orientation="Horizontal" Spacing="8">
+                                  <ui:SymbolIcon Symbol="Add" FontSize="16"/>
+                                  <TextBlock Text="Locate Editors" FontWeight="SemiBold"/>
+                              </StackPanel>
+                          </Button>
+                          <ScrollViewer Grid.Row="2" Padding="40,0,40,40">
                                <ItemsControl ItemsSource="{Binding InstalledEditors}">
                                    <ItemsControl.ItemTemplate>
                                        <DataTemplate>
@@ -261,6 +275,64 @@
                                           </DataTemplate>
                                       </ItemsControl.ItemTemplate>
                                   </ItemsControl>
+                              </StackPanel>
+                          </ScrollViewer>
+                      </Grid>
+
+                      <!-- Page: Inspiration -->
+                      <Grid RowDefinitions="Auto,*" IsVisible="{Binding SelectedTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Inspiration'}">
+                          <TextBlock Text="Made with Unity" Classes="h1" />
+                          <ScrollViewer Grid.Row="1" Padding="40,0,40,40">
+                              <StackPanel>
+                                   <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsLoadingInspiration}" Height="2" Margin="0,0,0,15" Foreground="{StaticResource MetaAccent}"/>
+                                   
+                                   <ItemsControl ItemsSource="{Binding InspirationItems}">
+                                       <ItemsControl.ItemsPanel>
+                                           <ItemsPanelTemplate>
+                                               <WrapPanel />
+                                           </ItemsPanelTemplate>
+                                       </ItemsControl.ItemsPanel>
+                                       <ItemsControl.ItemTemplate>
+                                           <DataTemplate>
+                                                <!-- Pinterest Card -->
+                                               <Border  Width="260" Background="#1C1C1C" CornerRadius="12" Margin="0,0,20,20" ClipToBounds="True" BorderBrush="#252525" BorderThickness="1">
+                                                    <StackPanel>
+                                                        <!-- Image -->
+                                                        <Panel Height="300" Background="#0F0F0F">
+                                                             <Image Source="{Binding ImageUrl, Converter={StaticResource PathToBitmapConverter}}" Stretch="UniformToFill"/>
+                                                             <!-- Gradient Overlay -->
+                                                             <Border VerticalAlignment="Bottom" Height="80">
+                                                                 <Border.Background>
+                                                                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                                         <GradientStop Color="#00000000" Offset="0"/>
+                                                                         <GradientStop Color="#CC000000" Offset="1"/>
+                                                                     </LinearGradientBrush>
+                                                                 </Border.Background>
+                                                             </Border>
+                                                             <StackPanel VerticalAlignment="Bottom" Margin="15" Spacing="4">
+                                                                 <TextBlock Text="{Binding Title}" FontWeight="Bold" Foreground="White" TextTrimming="CharacterEllipsis"/>
+                                                                 <TextBlock Text="{Binding Author}" FontSize="11" Foreground="#CCCCCC" TextTrimming="CharacterEllipsis"/>
+                                                             </StackPanel>
+                                                        </Panel>
+                                                        
+                                                        <!-- Meta -->
+                                                        <Grid ColumnDefinitions="*,Auto" Margin="15,12">
+                                                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                                 <Border Background="#2A2A2A" CornerRadius="4" Padding="6,2">
+                                                                     <TextBlock Text="{Binding Source}" FontSize="10" Foreground="#AAAAAA"/>
+                                                                 </Border>
+                                                            </StackPanel>
+                                                            
+                                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                                <ui:SymbolIcon Symbol="Heart" FontSize="14" Foreground="#FF4444"/>
+                                                                <TextBlock Text="{Binding Likes}" FontSize="12" Foreground="#DDDDDD"/>
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </StackPanel>
+                                               </Border>
+                                           </DataTemplate>
+                                       </ItemsControl.ItemTemplate>
+                                   </ItemsControl>
                               </StackPanel>
                           </ScrollViewer>
                       </Grid>

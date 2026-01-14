@@ -6,10 +6,10 @@ namespace UnityProjectManager.Services
 {
     public interface IUnityHubService
     {
-        Task<IEnumerable<string>> GetInstalledEditorsAsync();
+        Task<IEnumerable<string>> GetInstalledEditorsAsync(IEnumerable<string>? additionalPaths = null);
         Task<IEnumerable<UnityProject>> ScanWatchFoldersAsync(IEnumerable<string> watchFolders);
         Task<IEnumerable<UnityProject>> GetHubProjectsAsync();
-        Task<string?> GetEditorPathForVersionAsync(string version);
+        Task<string?> GetEditorPathForVersionAsync(string version, IEnumerable<string>? additionalPaths = null);
         Task LaunchProjectAsync(string projectPath, string editorPath);
     }
 }

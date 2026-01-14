@@ -11,7 +11,7 @@ namespace UnityProjectManager.Services
 {
     public class UnityHubService : IUnityHubService
     {
-        public async Task<IEnumerable<string>> GetInstalledEditorsAsync()
+        public async Task<IEnumerable<string>> GetInstalledEditorsAsync(IEnumerable<string>? additionalPaths = null)
         {
             var editors = new HashSet<string>();
             
@@ -68,6 +68,31 @@ namespace UnityProjectManager.Services
 
                 await ParseEditorsFileAsync(editorsJson, editors);
                 await ParseEditorsFileAsync(editorsV2Json, editors);
+            }
+
+            // 4. Check Additional user paths
+            if (additionalPaths != null)
+            {
+                foreach (var path in additionalPaths)
+                {
+                    if (!Directory.Exists(path)) continue;
+
+                    // recursive check? No, probably just depth 1 or check if this IS an installation
+                    // Check if path IS an installation (e.g. key/2022.3.1)
+                    var directEditor = Path.Combine(path, "Editor", "Unity.exe");
+                    if (File.Exists(directEditor))
+                    {
+                        editors.Add(directEditor);
+                        continue;
+                    }
+
+                    // Check subfolders
+                    foreach (var dir in Directory.GetDirectories(path))
+                    {
+                        var subEditor = Path.Combine(dir, "Editor", "Unity.exe");
+                        if (File.Exists(subEditor)) editors.Add(subEditor);
+                    }
+                }
             }
 
             return editors;
@@ -268,9 +293,9 @@ namespace UnityProjectManager.Services
             }
         }
 
-        public async Task<string?> GetEditorPathForVersionAsync(string version)
+        public async Task<string?> GetEditorPathForVersionAsync(string version, IEnumerable<string>? additionalPaths = null)
         {
-            var editors = await GetInstalledEditorsAsync();
+            var editors = await GetInstalledEditorsAsync(additionalPaths);
             
             // Try exact match first
             foreach (var editor in editors)

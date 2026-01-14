@@ -16,7 +16,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IPackageService _packageService;
     private readonly IConfigService _configService;
     private readonly IProjectEditorService _editorService;
+    private readonly IProjectEditorService _editorService;
     private readonly ILearnService _learnService;
+    private readonly IInspirationService _inspirationService;
     private readonly GitService _gitService; // Using concrete class for now
 
     [ObservableProperty]
@@ -40,7 +42,16 @@ public partial class MainWindowViewModel : ViewModelBase
     private ObservableCollection<string> _watchFolders;
 
     [ObservableProperty]
+    private ObservableCollection<string> _unityInstallPaths;
+
+    [ObservableProperty]
     private ObservableCollection<string> _installedEditors;
+
+    [ObservableProperty]
+    private ObservableCollection<InspirationItem> _inspirationItems;
+
+    [ObservableProperty]
+    private bool _isLoadingInspiration;
 
     [ObservableProperty]
     private ObservableCollection<LearnContent> _learnContents;
@@ -74,10 +85,14 @@ public partial class MainWindowViewModel : ViewModelBase
         _unityService = new UnityHubService();
         _packageService = new PackageService();
         _configService = new ConfigService();
+        _configService = new ConfigService();
         _editorService = new ProjectEditorService();
+        _inspirationService = new InspirationService();
         _gitService = new GitService();
 
         _watchFolders = new ObservableCollection<string>();
+        _unityInstallPaths = new ObservableCollection<string>();
+        _inspirationItems = new ObservableCollection<InspirationItem>();
         _packages = new ObservableCollection<UnityPackage>();
         _projects = new ObservableCollection<UnityProject>();
         _installedEditors = new ObservableCollection<string>();
@@ -100,6 +115,12 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             if (System.IO.Directory.Exists(folder))
                 WatchFolders.Add(folder);
+        }
+
+        foreach (var folder in config.UnityInstallPaths)
+        {
+            if (System.IO.Directory.Exists(folder))
+                UnityInstallPaths.Add(folder);
         }
 
         foreach (var board in config.Boards)
@@ -137,6 +158,9 @@ public partial class MainWindowViewModel : ViewModelBase
         
         // 4. Load initial Learn content
         await SearchLearnContent();
+        
+        // 5. Load Inspiration
+        await LoadInspirationAsync();
     }
     
     [RelayCommand]
@@ -184,7 +208,7 @@ public partial class MainWindowViewModel : ViewModelBase
         MergeProjects(hubProjects);
 
         // 3. Load Installs
-        var editors = await _unityService.GetInstalledEditorsAsync();
+        var editors = await _unityService.GetInstalledEditorsAsync(UnityInstallPaths);
         InstalledEditors.Clear();
         foreach (var editor in editors) InstalledEditors.Add(editor);
 
@@ -272,11 +296,23 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand]
+    private void AddUnityInstallPath(string path)
+    {
+        if (!string.IsNullOrWhiteSpace(path) && System.IO.Directory.Exists(path) && !UnityInstallPaths.Contains(path))
+        {
+            UnityInstallPaths.Add(path);
+            SaveConfig();
+            LoadProjectsCommand.Execute(null);
+        }
+    }
+
     private async void SaveConfig()
     {
         var config = new AppConfig 
         { 
             WatchFolders = WatchFolders.ToList(),
+            UnityInstallPaths = UnityInstallPaths.ToList(),
             SelectedTab = SelectedTab,
             LastDocsUrl = SelectedDocsUrl,
             Boards = Boards.ToList()
@@ -315,7 +351,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         if (SelectedProject == null || string.IsNullOrEmpty(SelectedProject.Path) || string.IsNullOrEmpty(SelectedProject.UnityVersion)) return;
 
-        var editorPath = await _unityService.GetEditorPathForVersionAsync(SelectedProject.UnityVersion);
+        var editorPath = await _unityService.GetEditorPathForVersionAsync(SelectedProject.UnityVersion, UnityInstallPaths);
         
         if (!string.IsNullOrEmpty(editorPath))
         {
@@ -364,6 +400,22 @@ public partial class MainWindowViewModel : ViewModelBase
         catch (Exception ex)
         {
             Console.WriteLine($"Failed to open URL: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task LoadInspirationAsync()
+    {
+        IsLoadingInspiration = true;
+        try
+        {
+            var items = await _inspirationService.GetInspirationItemsAsync();
+            InspirationItems.Clear();
+            foreach(var item in items) InspirationItems.Add(item);
+        }
+        finally
+        {
+            IsLoadingInspiration = false;
         }
     }
 
