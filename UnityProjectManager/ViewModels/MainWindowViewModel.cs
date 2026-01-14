@@ -278,8 +278,8 @@ public partial class MainWindowViewModel : ViewModelBase
             Avalonia.Threading.Dispatcher.UIThread.Post(() => 
             {
                 Log($"Merging Projects (Scanned: {realProjects?.Count() ?? 0}, Hub: {hubProjects?.Count() ?? 0})");
-                MergeProjects(realProjects);
-                MergeProjects(hubProjects);
+                MergeProjects(realProjects ?? Enumerable.Empty<UnityProject>());
+                MergeProjects(hubProjects ?? Enumerable.Empty<UnityProject>());
                 Log($"Total Projects: {Projects.Count}");
             });
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityProjectManager.Models;
@@ -103,25 +104,34 @@ namespace UnityProjectManager.Services
 
             };
 
-            // Download images in parallel
-            var tasks = new List<Task>();
+            // Start downloading images in background (don't await them all)
             foreach(var item in items)
             {
-                tasks.Add(Task.Run(async () => 
+                // Fire and forget
+                _ = Task.Run(async () => 
                 {
                     try 
                     {
                         var bytes = await _httpClient.GetByteArrayAsync(item.ImageUrl);
-                        item.Image = new Avalonia.Media.Imaging.Bitmap(new System.IO.MemoryStream(bytes));
+                        
+                        // Create bitmap on UI thread or ensure it's thread safe? 
+                        // Avalonia Bitmaps usually need to be created with care, but stream constructor is generally ok.
+                        // However, updating the ObservableProperty must notify UI.
+                        
+                        var bitmap = new Avalonia.Media.Imaging.Bitmap(new System.IO.MemoryStream(bytes));
+                        
+                        Avalonia.Threading.Dispatcher.UIThread.Post(() => 
+                        {
+                            item.Image = bitmap;
+                        });
                     }
-                    catch 
+                    catch (Exception ex)
                     {
-                         // Failed to load image, ignore or set placeholder
+                         Console.WriteLine($"Failed to load image for {item.Title}: {ex.Message}");
                     }
-                }));
+                });
             }
 
-            await Task.WhenAll(tasks);
             return items;
         }
     }

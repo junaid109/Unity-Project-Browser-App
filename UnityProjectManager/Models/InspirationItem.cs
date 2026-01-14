@@ -1,12 +1,17 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
 namespace UnityProjectManager.Models
 {
-    public class InspirationItem
+    public partial class InspirationItem : ObservableObject
     {
         public string Id { get; set; } = System.Guid.NewGuid().ToString();
         public string Title { get; set; } = "";
         public string Description { get; set; } = "";
         public string ImageUrl { get; set; } = ""; // Can be local path or web URL
-        public object? Image { get; set; } // Stores the loaded Bitmap
+        
+        [ObservableProperty]
+        private object? _image; // Stores the loaded Bitmap
+        
         public string Source { get; set; } = "Unity"; // Twitter, Facebook, Unity, Reddit
         public string Author { get; set; } = "";
         public string Link { get; set; } = "";
