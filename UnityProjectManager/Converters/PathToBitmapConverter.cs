@@ -18,13 +18,9 @@ namespace UnityProjectManager.Converters
             {
                 if (path.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 {
-                    // This is a web URL. 
-                    // Note: Synchronous fetch in a converter is generally bad for performance.
-                    // But for this simple manager, we'll do it or use a Task.
-                    // For now, let's try a simple trick or just return a placeholder for web images 
-                    // and handle it in the ViewModel? 
-                    // Actually, let's try to load it.
-                    return Task.Run(() => LoadFromUrl(path)).Result;
+                    // Web URL: Not supported by this synchronous converter anymore.
+                    // Use View Model loading for web images.
+                    return null;
                 }
 
                 if (File.Exists(path))

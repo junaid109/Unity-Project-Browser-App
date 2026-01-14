@@ -11,12 +11,14 @@ namespace UnityProjectManager.Services
 
     public class InspirationService : IInspirationService
     {
+        private readonly System.Net.Http.HttpClient _httpClient = new System.Net.Http.HttpClient();
+
         public async Task<IEnumerable<InspirationItem>> GetInspirationItemsAsync()
         {
             // Mocking a "scrape" or API fetch
             await Task.Delay(1500); // Simulate network latency
 
-            return new List<InspirationItem>
+            var items = new List<InspirationItem>
             {
                 new InspirationItem 
                 { 
@@ -54,7 +56,7 @@ namespace UnityProjectManager.Services
                     Author = "HoYoverse",
                     Description = "Step into Teyvat, a vast world teeming with life and flowing with elemental energy.",
                     Source = "Facebook",
-                    ImageUrl = "https://cdn2.unrealengine.com/egs-genshin-impact-2-5-desktop-carousel-1248x702-602927233.jpg", // Actually Unity but just using a generic placeholder url if needed
+                    ImageUrl = "https://cdn2.unrealengine.com/egs-genshin-impact-2-5-desktop-carousel-1248x702-602927233.jpg",
                     Likes = 55000,
                     Tags = "#OpenWorld #Mobile"
                 },
@@ -94,12 +96,33 @@ namespace UnityProjectManager.Services
                     Author = "Battlestate Games",
                     Description = "A hardcore and realistic online first-person action RPG/Simulator with MMO features.",
                     Source = "Twitter",
-                    ImageUrl = "https://cdn.akamai.steamstatic.com/steam/apps/1326470/header.jpg", // Placeholder
+                    ImageUrl = "https://cdn.akamai.steamstatic.com/steam/apps/1326470/header.jpg", 
                     Likes = 22000,
                     Tags = "#FPS #Hardcore"
                 }
 
             };
+
+            // Download images in parallel
+            var tasks = new List<Task>();
+            foreach(var item in items)
+            {
+                tasks.Add(Task.Run(async () => 
+                {
+                    try 
+                    {
+                        var bytes = await _httpClient.GetByteArrayAsync(item.ImageUrl);
+                        item.Image = new Avalonia.Media.Imaging.Bitmap(new System.IO.MemoryStream(bytes));
+                    }
+                    catch 
+                    {
+                         // Failed to load image, ignore or set placeholder
+                    }
+                }));
+            }
+
+            await Task.WhenAll(tasks);
+            return items;
         }
     }
 }

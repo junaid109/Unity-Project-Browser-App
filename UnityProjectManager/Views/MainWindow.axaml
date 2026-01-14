@@ -299,7 +299,7 @@
                                                     <StackPanel>
                                                         <!-- Image -->
                                                         <Panel Height="300" Background="#0F0F0F">
-                                                             <Image Source="{Binding ImageUrl, Converter={StaticResource PathToBitmapConverter}}" Stretch="UniformToFill"/>
+                                                             <Image Source="{Binding Image}" Stretch="UniformToFill"/>
                                                              <!-- Gradient Overlay -->
                                                              <Border VerticalAlignment="Bottom" Height="80">
                                                                  <Border.Background>
@@ -324,7 +324,7 @@
                                                             </StackPanel>
                                                             
                                                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                                                <ui:SymbolIcon Symbol="Heart" FontSize="14" Foreground="#FF4444"/>
+                                                                <ui:SymbolIcon Symbol="Favorite" FontSize="14" Foreground="#FF4444"/>
                                                                 <TextBlock Text="{Binding Likes}" FontSize="12" Foreground="#DDDDDD"/>
                                                             </StackPanel>
                                                         </Grid>
@@ -467,6 +467,19 @@
                 </Grid>
            </SplitView.Content>
        </SplitView>
+
+       <!-- Debug Console Overlay -->
+       <Expander Header="Debug Console" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="20" Background="#1C1C1C" BorderBrush="#333333">
+           <TextBox Text="{Binding FullLogText}" 
+                    Height="200" Width="600" 
+                    Background="#0F0F0F" Foreground="#CCCCCC" 
+                    FontFamily="Consolas" FontSize="12" 
+                    TextWrapping="Wrap" 
+                    AcceptsReturn="True"
+                    IsReadOnly="True"
+                    BorderThickness="0"
+                    Padding="10"/>
+       </Expander>
        
        <!-- Details Overlay -->
        <Grid IsVisible="{Binding IsDetailsOpen}" Background="#CC000000">

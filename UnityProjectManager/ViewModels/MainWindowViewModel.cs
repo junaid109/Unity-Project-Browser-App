@@ -16,7 +16,6 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IPackageService _packageService;
     private readonly IConfigService _configService;
     private readonly IProjectEditorService _editorService;
-    private readonly IProjectEditorService _editorService;
     private readonly ILearnService _learnService;
     private readonly IInspirationService _inspirationService;
     private readonly GitService _gitService; // Using concrete class for now
@@ -80,11 +79,27 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private ObservableCollection<BoardTask> _doneTasks = new();
 
+    [ObservableProperty]
+    private ObservableCollection<string> _debugLogs = new ObservableCollection<string>();
+
+    [ObservableProperty]
+    private string _fullLogText = "";
+
+    private void Log(string message)
+    {
+        var msg = $"[{DateTime.Now:HH:mm:ss}] {message}";
+        Console.WriteLine(msg);
+        Avalonia.Threading.Dispatcher.UIThread.Post(() => 
+        {
+            DebugLogs.Add(msg);
+            FullLogText += msg + "\n";
+        });
+    }
+
     public MainWindowViewModel()
     {
         _unityService = new UnityHubService();
         _packageService = new PackageService();
-        _configService = new ConfigService();
         _configService = new ConfigService();
         _editorService = new ProjectEditorService();
         _inspirationService = new InspirationService();
@@ -101,66 +116,115 @@ public partial class MainWindowViewModel : ViewModelBase
         _learnService = new LearnService();
         
         // Initial Load
-        InitializeAsync();
+        // InitializeAsync(); // Removed to avoid running before UI is ready. Called from View now or dispatched.
+        Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(InitializeAsync);
     }
 
     private async void InitializeAsync()
     {
-        // 1. Load Config
-        var config = await _configService.LoadConfigAsync();
-        SelectedTab = config.SelectedTab;
-        SelectedDocsUrl = config.LastDocsUrl;
-        
-        foreach (var folder in config.WatchFolders)
+        Log("Initializing Application...");
+        try 
         {
-            if (System.IO.Directory.Exists(folder))
-                WatchFolders.Add(folder);
-        }
+            // 1. Load Config
+            Log("Loading Config...");
+            var config = await _configService.LoadConfigAsync();
+            SelectedTab = config.SelectedTab;
+            SelectedDocsUrl = config.LastDocsUrl;
+            
+            Log($"Loaded Config. WatchFolders: {config.WatchFolders.Count}, InstallPaths: {config.UnityInstallPaths.Count}");
 
-        foreach (var folder in config.UnityInstallPaths)
+            bool isFirstRun = true;
+
+            if (config.WatchFolders.Count > 0)
+            {
+                isFirstRun = false;
+                foreach (var folder in config.WatchFolders)
+                {
+                    if (System.IO.Directory.Exists(folder))
+                    {
+                        WatchFolders.Add(folder);
+                        Log($"Added Watch Folder: {folder}");
+                    }
+                    else
+                    {
+                        Log($"Watch Folder missing: {folder}");
+                    }
+                }
+            }
+
+            if (config.UnityInstallPaths.Count > 0)
+            {
+                foreach (var folder in config.UnityInstallPaths)
+                {
+                    if (System.IO.Directory.Exists(folder))
+                        UnityInstallPaths.Add(folder);
+                }
+            }
+
+            if (config.Boards.Count > 0)
+            {
+                isFirstRun = false;
+                foreach (var board in config.Boards)
+                {
+                    Boards.Add(board);
+                }
+            }
+
+            // Only add defaults if it's strictly a first run (no folders, no boards)
+            if (isFirstRun)
+            {
+                Log("First Run Detected. Adding defaults.");
+                // Default Board
+                var defaultBoard = new ProjectBoard { Name = "Main Project Board" };
+                defaultBoard.Tasks.Add(new BoardTask { Title = "Setup Unity Project", Description = "Initialize git and project folders", Status = BoardTaskStatus.Todo });
+                defaultBoard.Tasks.Add(new BoardTask { Title = "Design System", Description = "Create UI components", Status = BoardTaskStatus.Doing });
+                Boards.Add(defaultBoard);
+
+                // Default Docs Folder
+                var defaultDocs = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Unity Projects");
+                if (System.IO.Directory.Exists(defaultDocs)) 
+                {
+                     WatchFolders.Add(defaultDocs);
+                     Log($"Added Default Watch Folder: {defaultDocs}");
+                     // We added a folder, so save this state immediately
+                     SaveConfig(); 
+                }
+            }
+            else
+            {
+                 // If we have boards but somehow no selected board, select first
+                 if (Boards.Count > 0) SelectedBoard = Boards.FirstOrDefault();
+            }
+
+            if (SelectedBoard == null && Boards.Count > 0) SelectedBoard = Boards.FirstOrDefault();
+            UpdateBoardColumns();
+
+            // 2. Load Mock Data ONLY if it's first run AND we found no real projects later?
+            // Actually, let's just NOT add mocks if we have ever saved state. 
+            // If the user has cleared all their projects, they shouldn't see mocks again.
+            if (isFirstRun && Projects.Count == 0)
+            {
+                Log("Adding Mock Projects.");
+                Projects.Add(new UnityProject { Name = "RPG Adventure (Mock)", UnityVersion = "2022.3.10f1", VersionType="LTS", LastModified = DateTime.Now.AddDays(-2) });
+                Projects.Add(new UnityProject { Name = "Sci-Fi Shooter (Mock)", UnityVersion = "2023.1.0b5", VersionType="Beta", LastModified = DateTime.Now.AddDays(-10) });
+            }
+
+            // 3. Trigger Scan
+            Log("Triggering Project Scan...");
+            await LoadProjectsAsync();
+            
+            // 4. Load initial Learn content
+            Log("Searching Learn Content...");
+            await SearchLearnContent();
+            
+            // 5. Load Inspiration
+            Log("Loading Inspiration...");
+            await LoadInspirationAsync();
+        }
+        catch (Exception ex)
         {
-            if (System.IO.Directory.Exists(folder))
-                UnityInstallPaths.Add(folder);
+            Log($"CRITICAL ERROR IN INIT: {ex.Message}\n{ex.StackTrace}");
         }
-
-        foreach (var board in config.Boards)
-        {
-            Boards.Add(board);
-        }
-
-        if (Boards.Count == 0)
-        {
-            var defaultBoard = new ProjectBoard { Name = "Main Project Board" };
-            defaultBoard.Tasks.Add(new BoardTask { Title = "Setup Unity Project", Description = "Initialize git and project folders", Status = BoardTaskStatus.Todo });
-            defaultBoard.Tasks.Add(new BoardTask { Title = "Design System", Description = "Create UI components", Status = BoardTaskStatus.Doing });
-            Boards.Add(defaultBoard);
-        }
-
-        SelectedBoard = Boards.FirstOrDefault();
-        UpdateBoardColumns();
-
-        // Add default if empty
-        if (WatchFolders.Count == 0)
-        {
-            var defaultDocs = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Unity Projects");
-            if (System.IO.Directory.Exists(defaultDocs)) AddWatchFolder(defaultDocs);
-        }
-
-        // 2. Load Mock Data for visuals if no real projects found initially
-        if (Projects.Count == 0)
-        {
-            Projects.Add(new UnityProject { Name = "RPG Adventure (Mock)", UnityVersion = "2022.3.10f1", VersionType="LTS", LastModified = DateTime.Now.AddDays(-2) });
-            Projects.Add(new UnityProject { Name = "Sci-Fi Shooter (Mock)", UnityVersion = "2023.1.0b5", VersionType="Beta", LastModified = DateTime.Now.AddDays(-10) });
-        }
-
-        // 3. Trigger Scan
-        await LoadProjectsAsync();
-        
-        // 4. Load initial Learn content
-        await SearchLearnContent();
-        
-        // 5. Load Inspiration
-        await LoadInspirationAsync();
     }
     
     [RelayCommand]
@@ -199,23 +263,50 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task LoadProjectsAsync()
     {
-        // 1. Scan Watch Folders
-        var realProjects = await Task.Run(() => _unityService.ScanWatchFoldersAsync(WatchFolders));
-        MergeProjects(realProjects);
-
-        // 2. Sync with Hub
-        var hubProjects = await _unityService.GetHubProjectsAsync();
-        MergeProjects(hubProjects);
-
-        // 3. Load Installs
-        var editors = await _unityService.GetInstalledEditorsAsync(UnityInstallPaths);
-        InstalledEditors.Clear();
-        foreach (var editor in editors) InstalledEditors.Add(editor);
-
-        // 4. Update Git Info (Background)
-        foreach (var project in Projects)
+        Log("Starting LoadProjectsAsync...");
+        try
         {
-            await _gitService.UpdateGitInfoAsync(project);
+             // 1. Scan Watch Folders
+            Log($"Scanning {WatchFolders.Count} watch folders...");
+            var realProjects = await Task.Run(() => _unityService.ScanWatchFoldersAsync(WatchFolders));
+            
+            // 2. Sync with Hub
+            Log("Syncing with Unity Hub...");
+            var hubProjects = await _unityService.GetHubProjectsAsync();
+
+            // Update Projects on UI Thread
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => 
+            {
+                Log($"Merging Projects (Scanned: {realProjects?.Count() ?? 0}, Hub: {hubProjects?.Count() ?? 0})");
+                MergeProjects(realProjects);
+                MergeProjects(hubProjects);
+                Log($"Total Projects: {Projects.Count}");
+            });
+
+            // 3. Load Installs
+            Log($"Scanning for Editors in {UnityInstallPaths.Count} custom paths...");
+            var editors = await _unityService.GetInstalledEditorsAsync(UnityInstallPaths);
+            
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => 
+            {
+                InstalledEditors.Clear();
+                foreach (var editor in editors) InstalledEditors.Add(editor);
+                Log($"Found {InstalledEditors.Count} Editors.");
+            });
+
+            // 4. Update Git Info (Background)
+            // Note: Git info updates modify properties on existing objects, 
+            // which notify property changed. This is *usually* ok if bindings listen on UI thread,
+            // but let's be safe if it modifies collections.
+            // GitService updates properties so it should be fine, but let's see.
+            foreach (var project in Projects)
+            {
+                await _gitService.UpdateGitInfoAsync(project);
+            }
+        }
+        catch (Exception ex)
+        {
+             Log($"ERROR IN LOAD PROJECTS: {ex.Message}");
         }
     }
 
@@ -373,11 +464,15 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             var results = await _learnService.SearchContentAsync(LearnSearchQuery);
-            LearnContents.Clear();
-            foreach (var item in results)
+            
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => 
             {
-                LearnContents.Add(item);
-            }
+                LearnContents.Clear();
+                foreach (var item in results)
+                {
+                    LearnContents.Add(item);
+                }
+            });
         }
         finally
         {
@@ -410,8 +505,12 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             var items = await _inspirationService.GetInspirationItemsAsync();
-            InspirationItems.Clear();
-            foreach(var item in items) InspirationItems.Add(item);
+            
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => 
+            {
+                InspirationItems.Clear();
+                foreach (var item in items) InspirationItems.Add(item);
+            });
         }
         finally
         {

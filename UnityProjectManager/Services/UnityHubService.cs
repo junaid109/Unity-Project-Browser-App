@@ -70,6 +70,9 @@ namespace UnityProjectManager.Services
                 await ParseEditorsFileAsync(editorsV2Json, editors);
             }
 
+            // 3. Fallback: Check "C:\Program Files\Unity\Hub\Editor" if not already found
+            // (Already checked at step 1)
+
             // 4. Check Additional user paths
             if (additionalPaths != null)
             {
@@ -77,8 +80,7 @@ namespace UnityProjectManager.Services
                 {
                     if (!Directory.Exists(path)) continue;
 
-                    // recursive check? No, probably just depth 1 or check if this IS an installation
-                    // Check if path IS an installation (e.g. key/2022.3.1)
+                     // Check if path IS an installation (e.g. key/2022.3.1)
                     var directEditor = Path.Combine(path, "Editor", "Unity.exe");
                     if (File.Exists(directEditor))
                     {
@@ -94,7 +96,7 @@ namespace UnityProjectManager.Services
                     }
                 }
             }
-
+            
             return editors;
         }
 
@@ -202,24 +204,34 @@ namespace UnityProjectManager.Services
         {
             var projects = new ConcurrentBag<UnityProject>();
 
-            foreach (var rootPath in watchFolders)
+            // Limit concurrency for scanning to avoid disk trash
+            await Parallel.ForEachAsync(watchFolders, new ParallelOptions { MaxDegreeOfParallelism = 4 }, async (rootPath, ct) => 
             {
                 if (Directory.Exists(rootPath))
                 {
-                    await ScanDirectoryRecursiveAsync(rootPath, projects);
+                    await ScanDirectoryRecursiveAsync(rootPath, projects, 0);
                 }
-            }
+            });
 
             return projects;
         }
 
-        private async Task ScanDirectoryRecursiveAsync(string directory, ConcurrentBag<UnityProject> projects)
+        private async Task ScanDirectoryRecursiveAsync(string directory, ConcurrentBag<UnityProject> projects, int depth)
         {
+            if (depth > 4) return; // Hard limit on depth to prevent infinite loops or massive scans
+
             try
             {
                 // Check if this directory is a Unity Project
                 var versionPath = Path.Combine(directory, "ProjectSettings", "ProjectVersion.txt");
-                if (File.Exists(versionPath))
+                var assetsPath = Path.Combine(directory, "Assets");
+                var projectSettingsPath = Path.Combine(directory, "ProjectSettings");
+
+                bool isProject = false;
+                if (File.Exists(versionPath)) isProject = true;
+                else if (Directory.Exists(assetsPath) && Directory.Exists(projectSettingsPath)) isProject = true;
+
+                if (isProject)
                 {
                     // It is a project!
                     var project = await ParseProjectAsync(directory, versionPath);
@@ -227,20 +239,47 @@ namespace UnityProjectManager.Services
                     {
                         projects.Add(project);
                     }
+                    else
+                    {
+                        // Fallback entry if version file is missing but folders exist
+                        if (!File.Exists(versionPath))
+                        {
+                             projects.Add(new UnityProject 
+                             {
+                                Name = new DirectoryInfo(directory).Name,
+                                Path = directory,
+                                UnityVersion = "Unknown",
+                                LastModified = Directory.GetLastWriteTime(directory),
+                                VersionType = "Unknown"
+                             });
+                        }
+                    }
                     // Don't scan inside a project
                     return;
                 }
 
-                // Otherwise scan subdirectories (limit depth if needed, but for now simple recursion)
-                // We shouldn't go too deep or scan system folders
+                // Optimization: Don't go deeper if we are already at depth 3 and haven't found a project yet? 
+                // Actually, users might organize like Category/Genre/Project, so depth 4 is reasonable.
+
                 var subDirs = Directory.GetDirectories(directory);
                 foreach (var subDir in subDirs)
                 {
-                    // Avoid hidden folders or common non-project folders
+                    // FILTER: Avoid hidden folders or common non-project folders
                     var name = Path.GetFileName(subDir);
-                    if (name.StartsWith(".") || name == "Library" || name == "Temp" || name == "Logs") continue;
+                    if (name.StartsWith(".") || 
+                        name.Equals("Library", StringComparison.OrdinalIgnoreCase) || 
+                        name.Equals("Temp", StringComparison.OrdinalIgnoreCase) || 
+                        name.Equals("Logs", StringComparison.OrdinalIgnoreCase) || 
+                        name.Equals("obj", StringComparison.OrdinalIgnoreCase) ||
+                        name.Equals("Build", StringComparison.OrdinalIgnoreCase) ||
+                        name.Equals("Builds", StringComparison.OrdinalIgnoreCase) ||
+                        name.Equals("node_modules", StringComparison.OrdinalIgnoreCase)) 
+                    {
+                        continue;
+                    }
 
-                    await ScanDirectoryRecursiveAsync(subDir, projects);
+                    // Recurse
+                    await ScanDirectoryRecursiveAsync(subDir, projects, depth + 1);
                 }
             }
             catch (Exception ex)
